@@ -234,6 +234,225 @@ const seedDatabase = async () => {
             const subjects = await Subject.create(cseSubjects);
             console.log(`Created ${subjects.length} CSE subjects`);
 
+            // Create subjects for Civil Engineering branch, semester 5
+            const civilBranch = branches.find(b => b.code === 'CE');
+            if (civilBranch) {
+                console.log('Creating Civil Engineering subjects...');
+                const civilSubjects = [
+                    {
+                        name: 'Engineering Mechanics',
+                        code: 'CE501',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 4,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Dr. Rajesh Verma',
+                            email: 'rajesh.verma@college.edu',
+                            phone: '9876543301',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Statics and dynamics of engineering structures',
+                        room: 'CE-101'
+                    },
+                    {
+                        name: 'Survey and Geo',
+                        code: 'CE502',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 3,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Prof. Geeta Sharma',
+                            email: 'geeta.sharma@college.edu',
+                            phone: '9876543302',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Surveying techniques and geological engineering',
+                        room: 'CE-102'
+                    },
+                    {
+                        name: 'Fluid Mechanics',
+                        code: 'CE503',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 4,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Dr. Amit Kumar',
+                            email: 'amit.kumar@college.edu',
+                            phone: '9876543303',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Fluid properties, flow analysis, and hydraulics',
+                        room: 'CE-103'
+                    },
+                    {
+                        name: 'Sensor',
+                        code: 'CE504',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 3,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Prof. Priya Singh',
+                            email: 'priya.singh@college.edu',
+                            phone: '9876543304',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Sensor technology and instrumentation in civil engineering',
+                        room: 'CE-104'
+                    },
+                    {
+                        name: 'UHV',
+                        code: 'CE505',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 2,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Dr. Sunita Gupta',
+                            email: 'sunita.gupta@college.edu',
+                            phone: '9876543305',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Universal Human Values and Ethics',
+                        room: 'CE-105'
+                    },
+                    {
+                        name: 'Cyber Security',
+                        code: 'CE506',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 3,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Prof. Vivek Pandey',
+                            email: 'vivek.pandey@college.edu',
+                            phone: '9876543306',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Cybersecurity principles and applications in civil engineering',
+                        room: 'CE-106'
+                    },
+                    {
+                        name: 'Survey Lab',
+                        code: 'CE507',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 2,
+                        type: 'practical',
+                        faculty: {
+                            name: 'Prof. Geeta Sharma',
+                            email: 'geeta.sharma@college.edu',
+                            phone: '9876543302',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Practical surveying techniques and field work',
+                        room: 'CE-Lab1'
+                    },
+                    {
+                        name: 'FM Lab',
+                        code: 'CE508',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 2,
+                        type: 'practical',
+                        faculty: {
+                            name: 'Dr. Amit Kumar',
+                            email: 'amit.kumar@college.edu',
+                            phone: '9876543303',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Fluid mechanics laboratory experiments',
+                        room: 'CE-Lab2'
+                    },
+                    {
+                        name: 'BPD Lab',
+                        code: 'CE509',
+                        branch: civilBranch._id,
+                        semester: 5,
+                        credits: 2,
+                        type: 'practical',
+                        faculty: {
+                            name: 'Prof. Anita Joshi',
+                            email: 'anita.joshi@college.edu',
+                            phone: '9876543307',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Building Planning and Design laboratory',
+                        room: 'CE-Lab3'
+                    }
+                ];
+
+                const civilSubjectsCreated = await Subject.create(civilSubjects);
+                console.log(`Created ${civilSubjectsCreated.length} Civil Engineering subjects`);
+
+                // Create timetable for Civil Engineering semester 5
+                console.log('Creating Civil Engineering timetable...');
+                const civilTimetableData = {
+                    branch: civilBranch._id,
+                    semester: 5,
+                    academicYear: '2024-2025',
+                    effectiveFrom: new Date('2024-08-01'),
+                    schedule: [
+                        {
+                            day: 'Monday',
+                            timeSlots: [
+                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[0]._id, room: 'CE-101', type: 'lecture' },
+                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[1]._id, room: 'CE-102', type: 'lecture' },
+                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[2]._id, room: 'CE-103', type: 'lecture' },
+                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[6]._id, room: 'CE-Lab1', type: 'lab' }
+                            ]
+                        },
+                        {
+                            day: 'Tuesday',
+                            timeSlots: [
+                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[3]._id, room: 'CE-104', type: 'lecture' },
+                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[4]._id, room: 'CE-105', type: 'lecture' },
+                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[5]._id, room: 'CE-106', type: 'lecture' },
+                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[7]._id, room: 'CE-Lab2', type: 'lab' }
+                            ]
+                        },
+                        {
+                            day: 'Wednesday',
+                            timeSlots: [
+                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[0]._id, room: 'CE-101', type: 'lecture' },
+                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[2]._id, room: 'CE-103', type: 'lecture' },
+                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[1]._id, room: 'CE-102', type: 'lecture' }
+                            ]
+                        },
+                        {
+                            day: 'Thursday',
+                            timeSlots: [
+                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[3]._id, room: 'CE-104', type: 'lecture' },
+                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[5]._id, room: 'CE-106', type: 'lecture' },
+                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[8]._id, room: 'CE-Lab3', type: 'lab' }
+                            ]
+                        },
+                        {
+                            day: 'Friday',
+                            timeSlots: [
+                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[0]._id, room: 'CE-101', type: 'lecture' },
+                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[2]._id, room: 'CE-103', type: 'lecture' },
+                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[4]._id, room: 'CE-105', type: 'lecture' }
+                            ]
+                        },
+                        {
+                            day: 'Saturday',
+                            timeSlots: []
+                        },
+                        {
+                            day: 'Sunday',
+                            timeSlots: []
+                        }
+                    ]
+                };
+
+                const civilTimetable = await Timetable.create(civilTimetableData);
+                console.log('Civil Engineering timetable created');
+            }
+
             // Create timetable for CSE semester 5
             console.log('Creating CSE timetable...');
             const timetableData = {

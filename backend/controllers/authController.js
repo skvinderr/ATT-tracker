@@ -28,7 +28,16 @@ const register = async (req, res) => {
         });
       }
 
-      const branchExists = await Branch.findById(branch);
+      // Check if branch is provided as code or ObjectId
+      let branchExists;
+      if (branch.length === 24) {
+        // Assume it's an ObjectId
+        branchExists = await Branch.findById(branch);
+      } else {
+        // Assume it's a branch code
+        branchExists = await Branch.findOne({ code: branch.toUpperCase() });
+      }
+      
       if (!branchExists) {
         return res.status(400).json({
           success: false,
@@ -48,24 +57,32 @@ const register = async (req, res) => {
 
     // Add student-specific data
     if (role === 'student') {
-      const branchInfo = await Branch.findById(branch);
+      // Get branch info (handle both ObjectId and code)
+      let branchInfo;
+      if (branch.length === 24) {
+        branchInfo = await Branch.findById(branch);
+      } else {
+        branchInfo = await Branch.findOne({ code: branch.toUpperCase() });
+      }
+      
       const studentId = generateStudentId(branchInfo.code);
       
       // Ensure unique student ID
+      let finalStudentId = studentId;
       let isUnique = false;
       let attempts = 0;
       while (!isUnique && attempts < 10) {
-        const existingStudentId = await User.findOne({ studentId });
+        const existingStudentId = await User.findOne({ studentId: finalStudentId });
         if (!existingStudentId) {
           isUnique = true;
         } else {
-          studentId = generateStudentId(branchInfo.code);
+          finalStudentId = generateStudentId(branchInfo.code);
           attempts++;
         }
       }
 
-      userData.studentId = studentId;
-      userData.branch = branch;
+      userData.studentId = finalStudentId;
+      userData.branch = branchInfo._id; // Always store ObjectId in database
       userData.semester = semester;
     }
 

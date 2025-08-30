@@ -11,6 +11,9 @@ const connectDB = require('./config/database');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const timetableRoutes = require('./routes/timetable');
+const subjectRoutes = require('./routes/subjects');
+const branchRoutes = require('./routes/branches');
 
 // Initialize Express app
 const app = express();
@@ -76,6 +79,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/branches', branchRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

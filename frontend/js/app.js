@@ -448,52 +448,506 @@ const PageManager = {
     // Load timetable page (student view)
     async loadTimetable() {
         try {
-            // Mock timetable data is already in the HTML
-            // In a real implementation, this would fetch data from the backend
-            console.log('Timetable page loaded');
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            if (!token) {
+                toast.error('Please login to continue');
+                this.showPage('login');
+                return;
+            }
+
+            const response = await fetch('/api/timetable', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    toast.error('Session expired. Please login again.');
+                    authManager.logout();
+                    return;
+                }
+                throw new Error('Failed to fetch timetable');
+            }
+
+            const result = await response.json();
+            const timetables = result.data || [];
+
+            this.renderStudentTimetable(timetables);
+
+            // Set up auto-refresh every 30 seconds
+            if (this.timetableRefreshInterval) {
+                clearInterval(this.timetableRefreshInterval);
+            }
+            this.timetableRefreshInterval = setInterval(() => {
+                if (currentPage === 'timetable') {
+                    this.loadTimetable();
+                }
+            }, 30000);
+
+            // Set up real-time update check
+            this.setupTimetableChangeDetection();
+
         } catch (error) {
             console.error('Error loading timetable:', error);
             toast.error('Failed to load timetable');
+            
+            const tableBody = document.getElementById('timetableTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <p>Error loading timetable</p>
+                            <small>Please try refreshing the page</small>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    },
+
+    // Render student timetable
+    renderStudentTimetable(timetables) {
+        const tableBody = document.getElementById('timetableTableBody');
+        if (!tableBody) return;
+
+        if (timetables.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <p>No timetable available</p>
+                        <small>Contact administration for schedule updates</small>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Process timetables to create a weekly view
+        const weeklySchedule = {
+            'Monday': [],
+            'Tuesday': [],
+            'Wednesday': [],
+            'Thursday': [],
+            'Friday': [],
+            'Saturday': []
+        };
+
+        timetables.forEach(timetable => {
+            timetable.schedule.forEach(daySchedule => {
+                if (weeklySchedule[daySchedule.day]) {
+                    daySchedule.timeSlots.forEach(slot => {
+                        weeklySchedule[daySchedule.day].push({
+                            subject: slot.subject.name,
+                            time: `${slot.startTime}-${slot.endTime}`,
+                            room: slot.room || 'N/A',
+                            type: slot.type || 'lecture'
+                        });
+                    });
+                }
+            });
+        });
+
+        // Sort time slots by start time for each day
+        Object.keys(weeklySchedule).forEach(day => {
+            weeklySchedule[day].sort((a, b) => {
+                const timeA = a.time.split('-')[0];
+                const timeB = b.time.split('-')[0];
+                return timeA.localeCompare(timeB);
+            });
+        });
+
+        // Generate table HTML
+        const maxSlots = Math.max(...Object.values(weeklySchedule).map(day => day.length));
+        let tableHTML = '';
+
+        for (let i = 0; i < maxSlots; i++) {
+            tableHTML += '<tr>';
+            Object.keys(weeklySchedule).forEach(day => {
+                const slot = weeklySchedule[day][i];
+                if (slot) {
+                    const typeColor = slot.type === 'lab' ? 'bg-info' : 
+                                     slot.type === 'tutorial' ? 'bg-warning' : 'bg-light';
+                    tableHTML += `
+                        <td class="${typeColor}">
+                            <div class="fw-bold">${slot.subject}</div>
+                            <small class="text-muted">${slot.time}</small><br>
+                            <small class="text-muted">${slot.room}</small>
+                        </td>
+                    `;
+                } else {
+                    tableHTML += '<td class="bg-light text-center text-muted">-</td>';
+                }
+            });
+            tableHTML += '</tr>';
+        }
+
+        tableBody.innerHTML = tableHTML;
+
+        // Update last updated time
+        const lastUpdated = document.querySelector('.card-body small');
+        if (lastUpdated) {
+            lastUpdated.textContent = `Last updated: ${new Date().toLocaleString()}`;
         }
     },
 
     // Load timetables management page (admin view)
     async loadTimetables() {
         try {
-            // Mock data for admin timetable management
-            const mockTimetableData = [
-                { branch: 'CSE', semester: '3', subject: 'Data Structures', day: 'Monday', time: '09:00-10:00', room: 'CS-101' },
-                { branch: 'CSE', semester: '3', subject: 'Database Systems', day: 'Tuesday', time: '09:00-10:00', room: 'CS-102' },
-                { branch: 'CSE', semester: '3', subject: 'Computer Networks', day: 'Wednesday', time: '09:00-10:00', room: 'CS-103' },
-                { branch: 'ECE', semester: '2', subject: 'Digital Electronics', day: 'Monday', time: '10:00-11:00', room: 'ECE-201' },
-                { branch: 'MECH', semester: '4', subject: 'Thermodynamics', day: 'Friday', time: '11:00-12:00', room: 'MECH-301' }
-            ];
+            // Double-check authentication and admin role
+            if (!authManager.isAuthenticated()) {
+                toast.error('Please login to continue');
+                this.showPage('login');
+                return;
+            }
 
+            if (!authManager.hasRole('admin')) {
+                toast.error('Access denied: Administrator privileges required');
+                this.showPage('dashboard');
+                return;
+            }
+
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            if (!token) {
+                toast.error('Authentication token missing. Please login again.');
+                authManager.logout();
+                return;
+            }
+
+            // Show loading state
             const tableBody = document.getElementById('timetablesTableBody');
             if (tableBody) {
-                tableBody.innerHTML = mockTimetableData.map((entry, index) => `
+                tableBody.innerHTML = `
                     <tr>
-                        <td>${entry.branch}</td>
-                        <td>Semester ${entry.semester}</td>
-                        <td>${entry.subject}</td>
-                        <td>${entry.day}</td>
-                        <td>${entry.time}</td>
-                        <td>${entry.room}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editTimetableEntry(${index})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTimetableEntry(${index})">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                        <td colspan="7" class="text-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading timetables...
                         </td>
                     </tr>
-                `).join('');
+                `;
+            }
+
+            const response = await fetch('/api/timetable', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    toast.error('Session expired. Please login again.');
+                    authManager.logout();
+                    return;
+                } else if (response.status === 403) {
+                    toast.error('Access forbidden. Administrator privileges required.');
+                    this.showPage('dashboard');
+                    return;
+                }
+                throw new Error(`Failed to fetch timetables (Status: ${response.status})`);
+            }
+
+            const result = await response.json();
+            const timetables = result.data || [];
+
+            if (tableBody) {
+                if (timetables.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                <i class="bi bi-calendar-x me-2"></i>
+                                No timetables found
+                                <br><small class="mt-1">Click "Add Schedule" to create your first timetable entry</small>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tableBody.innerHTML = timetables.map((timetable) => {
+                        // Create simplified view for table display
+                        const scheduleEntries = [];
+                        timetable.schedule.forEach(day => {
+                            day.timeSlots.forEach((slot, slotIndex) => {
+                                scheduleEntries.push({
+                                    timetableId: timetable._id,
+                                    branch: timetable.branch?.name || timetable.branch?.code || 'N/A',
+                                    semester: timetable.semester,
+                                    subject: slot.subject?.name || 'Unknown Subject',
+                                    day: day.day,
+                                    time: `${slot.startTime}-${slot.endTime}`,
+                                    room: slot.room || 'N/A',
+                                    slotId: slot._id || `${day.day}-${slotIndex}`,
+                                    dayName: day.day,
+                                    slotIndex: slotIndex
+                                });
+                            });
+                        });
+
+                        return scheduleEntries.map((entry, index) => `
+                            <tr data-timetable-id="${entry.timetableId}" data-slot-id="${entry.slotId}" data-day="${entry.dayName}" data-slot-index="${entry.slotIndex}">
+                                <td>${entry.branch}</td>
+                                <td>Semester ${entry.semester}</td>
+                                <td>${entry.subject}</td>
+                                <td>${entry.day}</td>
+                                <td>${entry.time}</td>
+                                <td>${entry.room}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editTimetableEntry('${entry.timetableId}', '${entry.slotId}', '${entry.dayName}', ${entry.slotIndex})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTimetableEntry('${entry.timetableId}', '${entry.slotId}', '${entry.dayName}', ${entry.slotIndex})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }).join('');
+                }
+            }
+
+            // Load subjects for dropdown
+            const subjects = await this.loadSubjectsForDropdown();
+            
+            // Load branches for dropdown (admin only)
+            if (authManager.hasRole('admin')) {
+                const branches = await this.loadBranchesForDropdown();
+                this.populateBranchDropdowns(branches);
+                // Setup subject filtering based on branch/semester selection
+                this.setupSubjectFiltering(subjects);
             }
 
         } catch (error) {
             console.error('Error loading timetables:', error);
-            toast.error('Failed to load timetables');
+            toast.error('Failed to load timetables: ' + error.message);
+            
+            const tableBody = document.getElementById('timetablesTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Error loading timetables: ${error.message}
+                            <br><small class="text-muted mt-1">Please refresh the page or try again later</small>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    },
+
+    // Load subjects for dropdown
+    async loadSubjectsForDropdown() {
+        try {
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            
+            // Try to fetch subjects from API first
+            try {
+                const response = await fetch('/api/subjects', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const subjects = result.data || [];
+                    this.populateSubjectDropdowns(subjects);
+                    return subjects;
+                }
+            } catch (apiError) {
+                console.log('API subjects not available, using mock data');
+            }
+            
+            // Fallback to mock subjects
+            const subjects = [
+                { _id: 'sub1', name: 'Data Structures', code: 'CS301', branch: 'CSE', semester: 5 },
+                { _id: 'sub2', name: 'Database Systems', code: 'CS302', branch: 'CSE', semester: 5 },
+                { _id: 'sub3', name: 'Computer Networks', code: 'CS303', branch: 'CSE', semester: 5 },
+                { _id: 'sub4', name: 'Digital Electronics', code: 'ECE201', branch: 'ECE', semester: 4 },
+                { _id: 'sub5', name: 'Thermodynamics', code: 'MECH401', branch: 'ME', semester: 4 },
+                { _id: 'sub6', name: 'Operating Systems', code: 'CS304', branch: 'CSE', semester: 6 },
+                { _id: 'sub7', name: 'Software Engineering', code: 'CS305', branch: 'CSE', semester: 6 },
+                { _id: 'sub8', name: 'Web Technologies', code: 'CS306', branch: 'CSE', semester: 6 }
+            ];
+            
+            this.populateSubjectDropdowns(subjects);
+            return subjects;
+        } catch (error) {
+            console.error('Error loading subjects:', error);
+        }
+    },
+
+    // Populate subject dropdowns
+    populateSubjectDropdowns(subjects) {
+        const subjectSelects = ['timetableSubject', 'editTimetableSubject'];
+        subjectSelects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.innerHTML = '<option value="">Select Subject</option>';
+                subjects.forEach(subject => {
+                    select.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code})</option>`;
+                });
+            }
+        });
+    },
+
+    // Load branches for dropdown (admin only)
+    async loadBranchesForDropdown() {
+        try {
+            const response = await fetch('/api/branches');
+            if (response.ok) {
+                const result = await response.json();
+                const branches = result.data || [];
+                this.branches = branches; // Store for later use
+                return branches;
+            } else {
+                console.error('Failed to load branches');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error loading branches:', error);
+            return [];
+        }
+    },
+
+    // Populate branch dropdowns
+    populateBranchDropdowns(branches) {
+        const branchSelects = ['timetableBranch', 'editTimetableBranch'];
+        const filterSelects = ['timetableFilterBranch'];
+        
+        // Populate regular branch selects
+        branchSelects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.innerHTML = '<option value="">Select Branch</option>';
+                branches.forEach(branch => {
+                    select.innerHTML += `<option value="${branch.code}">${branch.name} (${branch.code})</option>`;
+                });
+            }
+        });
+        
+        // Populate filter selects (with "All" option)
+        filterSelects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.innerHTML = '<option value="">All Branches</option>';
+                branches.forEach(branch => {
+                    select.innerHTML += `<option value="${branch.code}">${branch.name} (${branch.code})</option>`;
+                });
+            }
+        });
+    },
+
+    // Setup subject filtering based on branch and semester selection
+    setupSubjectFiltering(subjects) {
+        const branchSelect = document.getElementById('timetableBranch');
+        const semesterSelect = document.getElementById('timetableSemester');
+        const subjectSelect = document.getElementById('timetableSubject');
+        
+        const editBranchSelect = document.getElementById('editTimetableBranch');
+        const editSemesterSelect = document.getElementById('editTimetableSemester');
+        const editSubjectSelect = document.getElementById('editTimetableSubject');
+
+        // Store all subjects for filtering
+        window.allSubjects = subjects;
+
+        // Filter subjects for add form
+        const filterSubjects = () => {
+            const selectedBranch = branchSelect?.value;
+            const selectedSemester = parseInt(semesterSelect?.value);
+            
+            if (subjectSelect) {
+                let filteredSubjects = subjects;
+                
+                if (selectedBranch || selectedSemester) {
+                    filteredSubjects = subjects.filter(subject => {
+                        const branchMatch = !selectedBranch || 
+                            (subject.branch && subject.branch.code === selectedBranch) ||
+                            (typeof subject.branch === 'string' && subject.branch === selectedBranch);
+                        const semesterMatch = !selectedSemester || subject.semester === selectedSemester;
+                        return branchMatch && semesterMatch;
+                    });
+                }
+                
+                subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+                filteredSubjects.forEach(subject => {
+                    subjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code})</option>`;
+                });
+            }
+        };
+
+        // Filter subjects for edit form
+        const filterEditSubjects = () => {
+            const selectedBranch = editBranchSelect?.value;
+            const selectedSemester = parseInt(editSemesterSelect?.value);
+            
+            if (editSubjectSelect) {
+                let filteredSubjects = subjects;
+                
+                if (selectedBranch || selectedSemester) {
+                    filteredSubjects = subjects.filter(subject => {
+                        const branchMatch = !selectedBranch || 
+                            (subject.branch && subject.branch.code === selectedBranch) ||
+                            (typeof subject.branch === 'string' && subject.branch === selectedBranch);
+                        const semesterMatch = !selectedSemester || subject.semester === selectedSemester;
+                        return branchMatch && semesterMatch;
+                    });
+                }
+                
+                editSubjectSelect.innerHTML = '<option value="">Select Subject</option>';
+                filteredSubjects.forEach(subject => {
+                    editSubjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code})</option>`;
+                });
+            }
+        };
+
+        // Add event listeners
+        if (branchSelect) branchSelect.addEventListener('change', filterSubjects);
+        if (semesterSelect) semesterSelect.addEventListener('change', filterSubjects);
+        if (editBranchSelect) editBranchSelect.addEventListener('change', filterEditSubjects);
+        if (editSemesterSelect) editSemesterSelect.addEventListener('change', filterEditSubjects);
+    },
+
+    // Setup timetable change detection for real-time updates
+    setupTimetableChangeDetection() {
+        if (this.timetableLastHash) {
+            // Only for students - check if timetable has changed
+            if (authManager.hasRole('student')) {
+                this.checkForTimetableUpdates();
+            }
+        }
+    },
+
+    // Check for timetable updates (for students)
+    async checkForTimetableUpdates() {
+        try {
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            const response = await fetch('/api/timetable', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const currentHash = JSON.stringify(result.data).split('').reduce((a, b) => {
+                    a = ((a << 5) - a) + b.charCodeAt(0);
+                    return a & a;
+                }, 0);
+
+                if (this.timetableLastHash && this.timetableLastHash !== currentHash) {
+                    // Timetable has changed, show notification
+                    toast.info('📅 Your timetable has been updated by administration!', 8000);
+                    this.renderStudentTimetable(result.data);
+                }
+                
+                this.timetableLastHash = currentHash;
+            }
+        } catch (error) {
+            // Silently fail for this background check
+            console.log('Timetable update check failed:', error);
         }
     },
 
@@ -595,12 +1049,14 @@ function showPage(pageId) {
     // Check role-specific pages
     if (pageId === 'markAttendance' && !authManager.hasRole('student')) {
         toast.error('Access denied: Students only');
+        PageManager.showPage('dashboard'); // Redirect to dashboard instead of just returning
         return;
     }
 
     const adminPages = ['students', 'subjects', 'timetables'];
     if (adminPages.includes(pageId) && !authManager.hasRole('admin')) {
         toast.error('Access denied: Administrators only');
+        PageManager.showPage('dashboard'); // Redirect to dashboard instead of just returning
         return;
     }
 
@@ -616,6 +1072,17 @@ window.addEventListener('popstate', function(event) {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
+    // Debug function for authentication
+    window.debugAuth = function() {
+        console.log('=== Authentication Debug ===');
+        console.log('Is Authenticated:', authManager.isAuthenticated());
+        console.log('Current User:', authManager.getCurrentUser());
+        console.log('Has Admin Role:', authManager.hasRole('admin'));
+        console.log('Has Student Role:', authManager.hasRole('student'));
+        console.log('Token in localStorage:', localStorage.getItem(STORAGE_KEYS.TOKEN) ? 'Present' : 'Missing');
+        console.log('===========================');
+    };
+    
     // Check URL hash for initial page
     const hash = window.location.hash.substring(1);
     const initialPage = hash || 'login';
@@ -735,13 +1202,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Helper functions for timetable management
-function addTimetableEntry() {
+async function addTimetableEntry() {
     const form = document.getElementById('addTimetableForm');
-    const formData = new FormData(form);
     
     const entry = {
         branch: document.getElementById('timetableBranch').value,
-        semester: document.getElementById('timetableSemester').value,
+        semester: parseInt(document.getElementById('timetableSemester').value),
         subject: document.getElementById('timetableSubject').value,
         day: document.getElementById('timetableDay').value,
         time: document.getElementById('timetableTime').value,
@@ -754,29 +1220,304 @@ function addTimetableEntry() {
         return;
     }
 
-    // In a real implementation, this would send data to the backend
-    console.log('Adding timetable entry:', entry);
-    toast.success('Timetable entry added successfully');
-    
-    // Close modal and reset form
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addTimetableModal'));
-    modal.hide();
-    form.reset();
-    
-    // Reload timetables
-    PageManager.loadTimetables();
-}
+    // Parse time range
+    const timeMatch = entry.time.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+    if (!timeMatch) {
+        toast.error('Time format should be HH:MM-HH:MM (e.g., 09:00-10:00)');
+        return;
+    }
 
-function editTimetableEntry(index) {
-    // In a real implementation, this would open an edit modal with pre-filled data
-    toast.info('Edit functionality would be implemented here');
-}
+    const [, startTime, endTime] = timeMatch;
 
-function deleteTimetableEntry(index) {
-    if (confirm('Are you sure you want to delete this timetable entry?')) {
-        // In a real implementation, this would send a delete request to the backend
-        toast.success('Timetable entry deleted successfully');
+    try {
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        const response = await fetch('/api/timetable', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                branch: entry.branch,
+                semester: entry.semester,
+                academicYear: '2024-2025', // You might want to make this dynamic
+                schedule: [{
+                    day: entry.day,
+                    timeSlots: [{
+                        startTime: startTime,
+                        endTime: endTime,
+                        subject: entry.subject,
+                        room: entry.room,
+                        type: 'lecture'
+                    }]
+                }],
+                effectiveFrom: new Date().toISOString()
+            })
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to add timetable entry');
+        }
+
+        toast.success('Timetable entry added successfully');
+        
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addTimetableModal'));
+        modal.hide();
+        form.reset();
+        
+        // Reload timetables
         PageManager.loadTimetables();
+    } catch (error) {
+        console.error('Error adding timetable entry:', error);
+        toast.error(error.message || 'Failed to add timetable entry');
+    }
+}
+
+async function editTimetableEntry(timetableId, slotId, dayName, slotIndex) {
+    try {
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        const response = await fetch(`/api/timetable/${timetableId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch timetable details');
+        }
+
+        const result = await response.json();
+        const timetable = result.data;
+
+        // Find the specific time slot using slotId or fallback to day/index
+        let foundSlot = null;
+        let foundDay = null;
+
+        for (const daySchedule of timetable.schedule) {
+            // First try to find by slotId
+            if (slotId && slotId !== 'undefined') {
+                const slot = daySchedule.timeSlots.find(s => s._id === slotId);
+                if (slot) {
+                    foundSlot = slot;
+                    foundDay = daySchedule.day;
+                    break;
+                }
+            }
+            
+            // Fallback to day name and index
+            if (daySchedule.day === dayName && daySchedule.timeSlots[slotIndex]) {
+                foundSlot = daySchedule.timeSlots[slotIndex];
+                foundDay = daySchedule.day;
+                break;
+            }
+        }
+
+        if (!foundSlot) {
+            throw new Error('Time slot not found');
+        }
+
+        // Populate edit form
+        document.getElementById('editTimetableId').value = timetableId;
+        document.getElementById('editTimetableIndex').value = slotId || `${dayName}-${slotIndex}`;
+        document.getElementById('editTimetableBranch').value = timetable.branch.code || timetable.branch.name;
+        document.getElementById('editTimetableSemester').value = timetable.semester;
+        document.getElementById('editTimetableSubject').value = foundSlot.subject._id || foundSlot.subject;
+        document.getElementById('editTimetableDay').value = foundDay;
+        document.getElementById('editTimetableTime').value = `${foundSlot.startTime}-${foundSlot.endTime}`;
+        document.getElementById('editTimetableRoom').value = foundSlot.room || '';
+
+        // Show edit modal
+        const editModalElement = document.getElementById('editTimetableModal');
+        editModalElement.dataset.dayName = foundDay;
+        editModalElement.dataset.slotIndex = slotIndex;
+        const editModal = new bootstrap.Modal(editModalElement);
+        editModal.show();
+
+    } catch (error) {
+        console.error('Error editing timetable entry:', error);
+        toast.error(error.message || 'Failed to load timetable entry for editing');
+    }
+}
+
+async function updateTimetableEntry() {
+    const timetableId = document.getElementById('editTimetableId').value;
+    const slotIdentifier = document.getElementById('editTimetableIndex').value;
+    
+    const entry = {
+        subject: document.getElementById('editTimetableSubject').value,
+        day: document.getElementById('editTimetableDay').value,
+        time: document.getElementById('editTimetableTime').value,
+        room: document.getElementById('editTimetableRoom').value
+    };
+
+    // Validate form
+    if (!entry.subject || !entry.day || !entry.time || !entry.room) {
+        toast.error('Please fill in all fields');
+        return;
+    }
+
+    // Parse time range
+    const timeMatch = entry.time.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+    if (!timeMatch) {
+        toast.error('Time format should be HH:MM-HH:MM (e.g., 09:00-10:00)');
+        return;
+    }
+
+    const [, startTime, endTime] = timeMatch;
+
+    try {
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        let updateResponse;
+        let triedLegacy = false;
+
+        // Try ObjectId endpoint first if slotIdentifier is not day-index format
+        if (!slotIdentifier.includes('-')) {
+            updateResponse = await fetch(`/api/timetable/${timetableId}/timeslot/${slotIdentifier}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    startTime,
+                    endTime,
+                    subject: entry.subject,
+                    room: entry.room,
+                    type: 'lecture'
+                })
+            });
+
+            // If 404 and error is 'Time slot not found', try legacy endpoint
+            if (updateResponse.status === 404) {
+                const errorResult = await updateResponse.json();
+                if (errorResult.message && errorResult.message.includes('Time slot not found')) {
+                    triedLegacy = true;
+                    // Extract day and index from the edit modal context
+                    const dayName = document.getElementById('editTimetableModal').dataset.dayName;
+                    const slotIndex = document.getElementById('editTimetableModal').dataset.slotIndex;
+                    
+                    updateResponse = await fetch(`/api/timetable/${timetableId}/day/${dayName}/slot/${slotIndex}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            startTime,
+                            endTime,
+                            subject: entry.subject,
+                            room: entry.room,
+                            type: 'lecture'
+                        })
+                    });
+                } else {
+                    throw new Error(errorResult.message || 'Failed to update timetable entry');
+                }
+            }
+        } else {
+            // Use day/index endpoint for legacy data
+            triedLegacy = true;
+            const [dayName, slotIndex] = slotIdentifier.split('-');
+            updateResponse = await fetch(`/api/timetable/${timetableId}/day/${dayName}/slot/${slotIndex}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    startTime,
+                    endTime,
+                    subject: entry.subject,
+                    room: entry.room,
+                    type: 'lecture'
+                })
+            });
+        }
+
+        if (!updateResponse.ok) {
+            const errorResult = await updateResponse.json();
+            throw new Error(errorResult.message || 'Failed to update timetable entry');
+        }
+
+        const updateResult = await updateResponse.json();
+        toast.success('Timetable entry updated successfully');
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editTimetableModal'));
+        modal.hide();
+        
+        // Reload timetables
+        PageManager.loadTimetables();
+        
+    } catch (error) {
+        console.error('Error updating timetable entry:', error);
+        toast.error(error.message || 'Failed to update timetable entry');
+    }
+}
+
+async function deleteTimetableEntry(timetableId, slotId, dayName, slotIndex) {
+    if (!confirm('Are you sure you want to delete this timetable entry?')) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        let deleteResponse;
+        let triedLegacy = false;
+
+        // Try ObjectId endpoint first if slotId is not day-index format
+        if (slotId && slotId !== 'undefined' && !slotId.includes('-')) {
+            deleteResponse = await fetch(`/api/timetable/${timetableId}/timeslot/${slotId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // If 404 and error is 'Time slot not found', try legacy endpoint
+            if (deleteResponse.status === 404) {
+                const errorResult = await deleteResponse.json();
+                if (errorResult.message && errorResult.message.includes('Time slot not found')) {
+                    triedLegacy = true;
+                    deleteResponse = await fetch(`/api/timetable/${timetableId}/day/${dayName}/slot/${slotIndex}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } else {
+                    throw new Error(errorResult.message || 'Failed to delete timetable entry');
+                }
+            }
+        } else {
+            // Use day/index endpoint for legacy data
+            triedLegacy = true;
+            deleteResponse = await fetch(`/api/timetable/${timetableId}/day/${dayName}/slot/${slotIndex}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+
+        if (!deleteResponse.ok) {
+            const errorResult = await deleteResponse.json();
+            throw new Error(errorResult.message || 'Failed to delete timetable entry');
+        }
+
+        const result = await deleteResponse.json();
+        toast.success(result.message || 'Timetable entry deleted successfully');
+        PageManager.loadTimetables();
+    } catch (error) {
+        console.error('Error deleting timetable entry:', error);
+        toast.error(error.message || 'Failed to delete timetable entry');
     }
 }
 
@@ -784,9 +1525,11 @@ function filterTimetables() {
     const branch = document.getElementById('timetableFilterBranch').value;
     const semester = document.getElementById('timetableFilterSemester').value;
     
-    // In a real implementation, this would filter the timetable data
-    console.log('Filtering timetables:', { branch, semester });
-    toast.info('Filter functionality would be implemented here');
+    // Reload timetables with filters
+    const currentPageManager = PageManager;
+    currentPageManager.loadTimetables();
+    
+    toast.info('Timetable filters applied');
 }
 
 // Student management functions

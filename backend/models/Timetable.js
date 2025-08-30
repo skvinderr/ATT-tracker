@@ -26,7 +26,7 @@ const timeSlotSchema = new mongoose.Schema({
     enum: ['lecture', 'lab', 'tutorial', 'seminar'],
     default: 'lecture'
   }
-}, { _id: false });
+}, { _id: true });
 
 const dayScheduleSchema = new mongoose.Schema({
   day: {

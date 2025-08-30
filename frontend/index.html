@@ -802,9 +802,7 @@
                                     <div class="col-md-4">
                                         <select class="form-select" id="timetableFilterBranch">
                                             <option value="">All Branches</option>
-                                            <option value="CSE">Computer Science</option>
-                                            <option value="ECE">Electronics</option>
-                                            <option value="MECH">Mechanical</option>
+                                            <!-- Options will be populated dynamically -->
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -814,6 +812,10 @@
                                             <option value="2">Semester 2</option>
                                             <option value="3">Semester 3</option>
                                             <option value="4">Semester 4</option>
+                                            <option value="5">Semester 5</option>
+                                            <option value="6">Semester 6</option>
+                                            <option value="7">Semester 7</option>
+                                            <option value="8">Semester 8</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -874,9 +876,7 @@
                                 <label for="timetableBranch" class="form-label">Branch</label>
                                 <select class="form-select" id="timetableBranch" required>
                                     <option value="">Select Branch</option>
-                                    <option value="CSE">Computer Science</option>
-                                    <option value="ECE">Electronics</option>
-                                    <option value="MECH">Mechanical</option>
+                                    <!-- Options will be populated dynamically -->
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -887,6 +887,10 @@
                                     <option value="2">Semester 2</option>
                                     <option value="3">Semester 3</option>
                                     <option value="4">Semester 4</option>
+                                    <option value="5">Semester 5</option>
+                                    <option value="6">Semester 6</option>
+                                    <option value="7">Semester 7</option>
+                                    <option value="8">Semester 8</option>
                                 </select>
                             </div>
                         </div>
@@ -926,6 +930,83 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="addTimetableEntry()">Add Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Timetable Modal -->
+    <div class="modal fade" id="editTimetableModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Timetable Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTimetableForm">
+                        <input type="hidden" id="editTimetableId">
+                        <input type="hidden" id="editTimetableIndex">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableBranch" class="form-label">Branch</label>
+                                <select class="form-select" id="editTimetableBranch" required>
+                                    <option value="">Select Branch</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableSemester" class="form-label">Semester</label>
+                                <select class="form-select" id="editTimetableSemester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="4">Semester 4</option>
+                                    <option value="5">Semester 5</option>
+                                    <option value="6">Semester 6</option>
+                                    <option value="7">Semester 7</option>
+                                    <option value="8">Semester 8</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTimetableSubject" class="form-label">Subject</label>
+                            <select class="form-select" id="editTimetableSubject" required>
+                                <option value="">Select Subject</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableDay" class="form-label">Day</label>
+                                <select class="form-select" id="editTimetableDay" required>
+                                    <option value="">Select Day</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableTime" class="form-label">Time</label>
+                                <input type="text" class="form-control" id="editTimetableTime" placeholder="e.g., 09:00-10:00" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTimetableRoom" class="form-label">Room</label>
+                            <input type="text" class="form-control" id="editTimetableRoom" placeholder="e.g., CS-101" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateTimetableEntry()">Update Entry</button>
                 </div>
             </div>
         </div>

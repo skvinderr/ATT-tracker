@@ -163,15 +163,33 @@ class AuthManager {
 
     // Load branches for registration
     async loadBranches() {
-        // For now, we'll use hardcoded branches since we haven't implemented the branches API yet
-        this.branches = [
-            { _id: 'cse', name: 'Computer Science Engineering', code: 'CSE' },
-            { _id: 'ece', name: 'Electronics and Communication Engineering', code: 'ECE' },
-            { _id: 'me', name: 'Mechanical Engineering', code: 'ME' },
-            { _id: 'ce', name: 'Civil Engineering', code: 'CE' },
-            { _id: 'ee', name: 'Electrical Engineering', code: 'EE' },
-            { _id: 'it', name: 'Information Technology', code: 'IT' }
-        ];
+        try {
+            const response = await fetch('/api/branches');
+            if (response.ok) {
+                const result = await response.json();
+                this.branches = result.data || [];
+            } else {
+                // Fallback to hardcoded branches if API fails
+                console.warn('Failed to load branches from API, using fallback');
+                this.branches = [
+                    { _id: 'cse', name: 'Computer Science Engineering', code: 'CSE' },
+                    { _id: 'ece', name: 'Electronics and Communication Engineering', code: 'ECE' },
+                    { _id: 'me', name: 'Mechanical Engineering', code: 'ME' },
+                    { _id: 'ce', name: 'Civil Engineering', code: 'CE' },
+                    { _id: 'it', name: 'Information Technology', code: 'IT' }
+                ];
+            }
+        } catch (error) {
+            console.error('Error loading branches:', error);
+            // Fallback to hardcoded branches
+            this.branches = [
+                { _id: 'cse', name: 'Computer Science Engineering', code: 'CSE' },
+                { _id: 'ece', name: 'Electronics and Communication Engineering', code: 'ECE' },
+                { _id: 'me', name: 'Mechanical Engineering', code: 'ME' },
+                { _id: 'ce', name: 'Civil Engineering', code: 'CE' },
+                { _id: 'it', name: 'Information Technology', code: 'IT' }
+            ];
+        }
 
         // Populate branch select
         const branchSelect = document.getElementById('registerBranch');
@@ -179,7 +197,8 @@ class AuthManager {
             branchSelect.innerHTML = '<option value="">Select Branch</option>';
             this.branches.forEach(branch => {
                 const option = document.createElement('option');
-                option.value = branch._id;
+                // Use branch code instead of ObjectId for easier backend handling
+                option.value = branch.code;
                 option.textContent = `${branch.name} (${branch.code})`;
                 branchSelect.appendChild(option);
             });
