@@ -234,13 +234,159 @@ const seedDatabase = async () => {
             const subjects = await Subject.create(cseSubjects);
             console.log(`Created ${subjects.length} CSE subjects`);
 
-            // Create subjects for Civil Engineering branch, semester 5
+            // Create subjects for Civil Engineering branch
             const civilBranch = branches.find(b => b.code === 'CE');
             if (civilBranch) {
                 console.log('Creating Civil Engineering subjects...');
                 const civilSubjects = [
+                    // Semester 3 subjects
                     {
                         name: 'Engineering Mechanics',
+                        code: 'CE301',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 4,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Dr. Rajesh Verma',
+                            email: 'rajesh.verma@college.edu',
+                            phone: '9876543301',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Statics and dynamics of engineering structures',
+                        room: 'CE-101'
+                    },
+                    {
+                        name: 'Survey and Geo',
+                        code: 'CE302',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 3,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Prof. Geeta Sharma',
+                            email: 'geeta.sharma@college.edu',
+                            phone: '9876543302',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Surveying techniques and geological engineering',
+                        room: 'CE-102'
+                    },
+                    {
+                        name: 'Fluid Mechanics',
+                        code: 'CE303',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 4,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Dr. Amit Kumar',
+                            email: 'amit.kumar@college.edu',
+                            phone: '9876543303',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Fluid properties, flow analysis, and hydraulics',
+                        room: 'CE-103'
+                    },
+                    {
+                        name: 'Sensor',
+                        code: 'CE304',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 3,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Prof. Priya Singh',
+                            email: 'priya.singh@college.edu',
+                            phone: '9876543304',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Sensor technology and applications in civil engineering',
+                        room: 'CE-104'
+                    },
+                    {
+                        name: 'UHV',
+                        code: 'CE305',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 2,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Dr. Kavita Sharma',
+                            email: 'kavita.sharma@college.edu',
+                            phone: '9876543305',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Universal Human Values and professional ethics',
+                        room: 'CE-105'
+                    },
+                    {
+                        name: 'Cyber Security',
+                        code: 'CE306',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 3,
+                        type: 'theory',
+                        faculty: {
+                            name: 'Prof. Ankit Gupta',
+                            email: 'ankit.gupta@college.edu',
+                            phone: '9876543306',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Cybersecurity fundamentals and digital safety',
+                        room: 'CE-106'
+                    },
+                    {
+                        name: 'Survey Lab',
+                        code: 'CE307',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 2,
+                        type: 'practical',
+                        faculty: {
+                            name: 'Prof. Geeta Sharma',
+                            email: 'geeta.sharma@college.edu',
+                            phone: '9876543302',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Practical surveying exercises and field work',
+                        room: 'CE-Lab1'
+                    },
+                    {
+                        name: 'FM Lab',
+                        code: 'CE308',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 2,
+                        type: 'practical',
+                        faculty: {
+                            name: 'Dr. Amit Kumar',
+                            email: 'amit.kumar@college.edu',
+                            phone: '9876543303',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Fluid mechanics laboratory experiments',
+                        room: 'CE-Lab2'
+                    },
+                    {
+                        name: 'BPD Lab',
+                        code: 'CE309',
+                        branch: civilBranch._id,
+                        semester: 3,
+                        credits: 2,
+                        type: 'practical',
+                        faculty: {
+                            name: 'Prof. Priya Singh',
+                            email: 'priya.singh@college.edu',
+                            phone: '9876543304',
+                            department: 'Civil Engineering'
+                        },
+                        description: 'Basic Project Development laboratory',
+                        room: 'CE-Lab3'
+                    },
+                    // Semester 5 subjects
+                    {
+                        name: 'Structural Analysis',
                         code: 'CE501',
                         branch: civilBranch._id,
                         semester: 5,

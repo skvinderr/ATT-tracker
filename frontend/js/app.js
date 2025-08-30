@@ -707,13 +707,47 @@ const PageManager = {
 
             // Load subjects for dropdown
             const subjects = await this.loadSubjectsForDropdown();
+            console.log('Loaded subjects in loadTimetables:', subjects);
             
             // Load branches for dropdown (admin only)
             if (authManager.hasRole('admin')) {
                 const branches = await this.loadBranchesForDropdown();
                 this.populateBranchDropdowns(branches);
-                // Setup subject filtering based on branch/semester selection
+                
+                // Setup subject filtering immediately
                 this.setupSubjectFiltering(subjects);
+                
+                // Direct test - manually populate dropdown if it exists
+                setTimeout(() => {
+                    const testSubjectSelect = document.getElementById('timetableSubject');
+                    console.log('Direct test - subject select found:', testSubjectSelect);
+                    if (testSubjectSelect) {
+                        console.log('Manually populating subject dropdown...');
+                        testSubjectSelect.innerHTML = `
+                            <option value="">Select Subject</option>
+                            <option value="sub7">Engineering Mechanics (CE301) - CE</option>
+                            <option value="sub8">Survey and Geo (CE302) - CE</option>
+                            <option value="sub9">Fluid Mechanics (CE303) - CE</option>
+                            <option value="sub10">Sensor (CE304) - CE</option>
+                        `;
+                    }
+                }, 1000);
+                
+                // Also setup modal event listener to populate subjects when modal is shown
+                const addTimetableModal = document.getElementById('addTimetableModal');
+                if (addTimetableModal) {
+                    // Remove any existing event listeners
+                    addTimetableModal.removeEventListener('shown.bs.modal', this.modalShownHandler);
+                    
+                    // Create the handler function
+                    this.modalShownHandler = () => {
+                        console.log('Modal shown, setting up subject filtering again');
+                        this.setupSubjectFiltering(subjects);
+                    };
+                    
+                    // Add event listener for when modal is shown
+                    addTimetableModal.addEventListener('shown.bs.modal', this.modalShownHandler);
+                }
             }
 
         } catch (error) {
@@ -752,29 +786,53 @@ const PageManager = {
                 if (response.ok) {
                     const result = await response.json();
                     const subjects = result.data || [];
-                    this.populateSubjectDropdowns(subjects);
-                    return subjects;
+                    console.log('API returned subjects:', subjects);
+                    if (subjects.length > 0) {
+                        this.populateSubjectDropdowns(subjects);
+                        return subjects;
+                    } else {
+                        console.log('API returned empty subjects, falling back to mock data');
+                    }
                 }
             } catch (apiError) {
                 console.log('API subjects not available, using mock data');
             }
             
             // Fallback to mock subjects
+            console.log('Using mock subjects data');
             const subjects = [
-                { _id: 'sub1', name: 'Data Structures', code: 'CS301', branch: 'CSE', semester: 5 },
-                { _id: 'sub2', name: 'Database Systems', code: 'CS302', branch: 'CSE', semester: 5 },
-                { _id: 'sub3', name: 'Computer Networks', code: 'CS303', branch: 'CSE', semester: 5 },
-                { _id: 'sub4', name: 'Digital Electronics', code: 'ECE201', branch: 'ECE', semester: 4 },
-                { _id: 'sub5', name: 'Thermodynamics', code: 'MECH401', branch: 'ME', semester: 4 },
-                { _id: 'sub6', name: 'Operating Systems', code: 'CS304', branch: 'CSE', semester: 6 },
-                { _id: 'sub7', name: 'Software Engineering', code: 'CS305', branch: 'CSE', semester: 6 },
-                { _id: 'sub8', name: 'Web Technologies', code: 'CS306', branch: 'CSE', semester: 6 }
+                // CSE Semester 3
+                { _id: 'sub1', name: 'Data Structures', code: 'CS301', branch: 'CSE', semester: 3 },
+                { _id: 'sub2', name: 'Database Systems', code: 'CS302', branch: 'CSE', semester: 3 },
+                { _id: 'sub3', name: 'Object Oriented Programming', code: 'CS303', branch: 'CSE', semester: 3 },
+                // CSE Semester 5
+                { _id: 'sub4', name: 'Advanced Data Structures', code: 'CS501', branch: 'CSE', semester: 5 },
+                { _id: 'sub5', name: 'Computer Networks', code: 'CS502', branch: 'CSE', semester: 5 },
+                { _id: 'sub6', name: 'Operating Systems', code: 'CS503', branch: 'CSE', semester: 5 },
+                // Civil Engineering Semester 3
+                { _id: 'sub7', name: 'Engineering Mechanics', code: 'CE301', branch: 'CE', semester: 3 },
+                { _id: 'sub8', name: 'Survey and Geo', code: 'CE302', branch: 'CE', semester: 3 },
+                { _id: 'sub9', name: 'Fluid Mechanics', code: 'CE303', branch: 'CE', semester: 3 },
+                { _id: 'sub10', name: 'Sensor', code: 'CE304', branch: 'CE', semester: 3 },
+                { _id: 'sub11', name: 'UHV', code: 'CE305', branch: 'CE', semester: 3 },
+                { _id: 'sub12', name: 'Cyber Security', code: 'CE306', branch: 'CE', semester: 3 },
+                { _id: 'sub13', name: 'Survey Lab', code: 'CE307', branch: 'CE', semester: 3 },
+                { _id: 'sub14', name: 'FM Lab', code: 'CE308', branch: 'CE', semester: 3 },
+                { _id: 'sub15', name: 'BPD Lab', code: 'CE309', branch: 'CE', semester: 3 },
+                // Civil Engineering Semester 5
+                { _id: 'sub16', name: 'Structural Analysis', code: 'CE501', branch: 'CE', semester: 5 },
+                { _id: 'sub17', name: 'Concrete Technology', code: 'CE502', branch: 'CE', semester: 5 },
+                // ECE subjects
+                { _id: 'sub18', name: 'Digital Electronics', code: 'ECE201', branch: 'ECE', semester: 4 },
+                { _id: 'sub19', name: 'Microprocessors', code: 'ECE301', branch: 'ECE', semester: 3 }
             ];
             
+            console.log('Mock subjects created:', subjects.length, 'subjects');
             this.populateSubjectDropdowns(subjects);
             return subjects;
         } catch (error) {
             console.error('Error loading subjects:', error);
+            return [];
         }
     },
 
@@ -841,9 +899,13 @@ const PageManager = {
 
     // Setup subject filtering based on branch and semester selection
     setupSubjectFiltering(subjects) {
+        console.log('setupSubjectFiltering called with:', subjects);
+        
         const branchSelect = document.getElementById('timetableBranch');
         const semesterSelect = document.getElementById('timetableSemester');
         const subjectSelect = document.getElementById('timetableSubject');
+        
+        console.log('Form elements found:', { branchSelect, semesterSelect, subjectSelect });
         
         const editBranchSelect = document.getElementById('editTimetableBranch');
         const editSemesterSelect = document.getElementById('editTimetableSemester');
@@ -851,29 +913,94 @@ const PageManager = {
 
         // Store all subjects for filtering
         window.allSubjects = subjects;
+        console.log('Setting up subject filtering with subjects:', subjects);
+
+        // Initially populate all subjects
+        if (subjectSelect) {
+            console.log('Populating subject dropdown with', subjects.length, 'subjects');
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+            subjects.forEach((subject, index) => {
+                const branchDisplay = subject.branch && typeof subject.branch === 'object' 
+                    ? subject.branch.code 
+                    : subject.branch || '';
+                console.log(`Adding subject ${index + 1}:`, subject.name, `(${subject.code}) - ${branchDisplay}`);
+                subjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code}) - ${branchDisplay}</option>`;
+            });
+        } else {
+            console.log('Subject select element not found');
+        }
+
+        if (editSubjectSelect) {
+            editSubjectSelect.innerHTML = '<option value="">Select Subject</option>';
+            subjects.forEach(subject => {
+                const branchDisplay = subject.branch && typeof subject.branch === 'object' 
+                    ? subject.branch.code 
+                    : subject.branch || '';
+                editSubjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code}) - ${branchDisplay}</option>`;
+            });
+        }
 
         // Filter subjects for add form
         const filterSubjects = () => {
             const selectedBranch = branchSelect?.value;
             const selectedSemester = parseInt(semesterSelect?.value);
             
+            console.log('Filtering subjects:', { 
+                selectedBranch, 
+                selectedSemester, 
+                totalSubjects: subjects.length,
+                sampleSubject: subjects[0]
+            });
+            
             if (subjectSelect) {
                 let filteredSubjects = subjects;
                 
                 if (selectedBranch || selectedSemester) {
                     filteredSubjects = subjects.filter(subject => {
-                        const branchMatch = !selectedBranch || 
-                            (subject.branch && subject.branch.code === selectedBranch) ||
-                            (typeof subject.branch === 'string' && subject.branch === selectedBranch);
+                        console.log('Checking subject:', subject);
+                        
+                        // Handle branch matching - check both populated and string formats
+                        let branchMatch = !selectedBranch;
+                        if (selectedBranch) {
+                            if (subject.branch && typeof subject.branch === 'object') {
+                                // Branch is populated object
+                                branchMatch = subject.branch.code === selectedBranch;
+                                console.log('Branch object match:', subject.branch.code, '===', selectedBranch, '=', branchMatch);
+                            } else if (typeof subject.branch === 'string') {
+                                // Branch is string
+                                branchMatch = subject.branch === selectedBranch;
+                                console.log('Branch string match:', subject.branch, '===', selectedBranch, '=', branchMatch);
+                            }
+                        }
+                        
                         const semesterMatch = !selectedSemester || subject.semester === selectedSemester;
-                        return branchMatch && semesterMatch;
+                        const matches = branchMatch && semesterMatch;
+                        
+                        console.log('Subject filter result:', {
+                            subject: subject.name,
+                            branchMatch,
+                            semesterMatch,
+                            finalMatch: matches
+                        });
+                        
+                        return matches;
                     });
+                } else {
+                    // If no filters, show all subjects
+                    filteredSubjects = subjects;
                 }
+                
+                console.log('Filtered subjects:', filteredSubjects);
                 
                 subjectSelect.innerHTML = '<option value="">Select Subject</option>';
                 filteredSubjects.forEach(subject => {
-                    subjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code})</option>`;
+                    const branchDisplay = subject.branch && typeof subject.branch === 'object' 
+                        ? subject.branch.code 
+                        : subject.branch || '';
+                    subjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code}) - ${branchDisplay}</option>`;
                 });
+                
+                console.log('Subject dropdown updated with', filteredSubjects.length, 'options');
             }
         };
 
@@ -887,24 +1014,49 @@ const PageManager = {
                 
                 if (selectedBranch || selectedSemester) {
                     filteredSubjects = subjects.filter(subject => {
-                        const branchMatch = !selectedBranch || 
-                            (subject.branch && subject.branch.code === selectedBranch) ||
-                            (typeof subject.branch === 'string' && subject.branch === selectedBranch);
+                        // Handle branch matching - check both populated and string formats
+                        let branchMatch = !selectedBranch;
+                        if (selectedBranch) {
+                            if (subject.branch && typeof subject.branch === 'object') {
+                                // Branch is populated object
+                                branchMatch = subject.branch.code === selectedBranch;
+                            } else if (typeof subject.branch === 'string') {
+                                // Branch is string
+                                branchMatch = subject.branch === selectedBranch;
+                            }
+                        }
+                        
                         const semesterMatch = !selectedSemester || subject.semester === selectedSemester;
                         return branchMatch && semesterMatch;
                     });
+                } else {
+                    // If no filters, show all subjects
+                    filteredSubjects = subjects;
                 }
                 
                 editSubjectSelect.innerHTML = '<option value="">Select Subject</option>';
                 filteredSubjects.forEach(subject => {
-                    editSubjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code})</option>`;
+                    const branchDisplay = subject.branch && typeof subject.branch === 'object' 
+                        ? subject.branch.code 
+                        : subject.branch || '';
+                    editSubjectSelect.innerHTML += `<option value="${subject._id}">${subject.name} (${subject.code}) - ${branchDisplay}</option>`;
                 });
             }
         };
 
         // Add event listeners
-        if (branchSelect) branchSelect.addEventListener('change', filterSubjects);
-        if (semesterSelect) semesterSelect.addEventListener('change', filterSubjects);
+        if (branchSelect) {
+            branchSelect.addEventListener('change', () => {
+                console.log('Branch changed to:', branchSelect.value);
+                filterSubjects();
+            });
+        }
+        if (semesterSelect) {
+            semesterSelect.addEventListener('change', () => {
+                console.log('Semester changed to:', semesterSelect.value);
+                filterSubjects();
+            });
+        }
         if (editBranchSelect) editBranchSelect.addEventListener('change', filterEditSubjects);
         if (editSemesterSelect) editSemesterSelect.addEventListener('change', filterEditSubjects);
     },
@@ -998,40 +1150,116 @@ const PageManager = {
     // Load subjects management page (admin view)
     async loadSubjects() {
         try {
-            // Mock data for subject management
+            // Double-check authentication and admin role
+            if (!authManager.isAuthenticated()) {
+                toast.error('Please login to continue');
+                this.showPage('login');
+                return;
+            }
+
+            if (!authManager.hasRole('admin')) {
+                toast.error('Access denied: Administrator privileges required');
+                this.showPage('dashboard');
+                return;
+            }
+
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            if (!token) {
+                toast.error('Authentication token missing. Please login again.');
+                authManager.logout();
+                return;
+            }
+
+            // Load branches for the add subject form
+            const branches = await this.loadBranchesForDropdown();
+            this.populateSubjectFormBranches(branches);
+
+            // Try to fetch subjects from API first
+            try {
+                const response = await fetch('/api/subjects', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const subjects = result.data || [];
+                    this.displaySubjectsTable(subjects);
+                    return;
+                }
+            } catch (apiError) {
+                console.log('API subjects not available, using mock data');
+            }
+
+            // Fallback to mock data
             const mockSubjectsData = [
-                { code: 'CS301', name: 'Data Structures', branch: 'CSE', semester: '3', credits: 4 },
-                { code: 'CS302', name: 'Database Systems', branch: 'CSE', semester: '3', credits: 3 },
-                { code: 'CS303', name: 'Computer Networks', branch: 'CSE', semester: '3', credits: 3 },
-                { code: 'ECE201', name: 'Digital Electronics', branch: 'ECE', semester: '2', credits: 4 },
-                { code: 'MECH401', name: 'Thermodynamics', branch: 'MECH', semester: '4', credits: 3 }
+                { _id: 'sub1', code: 'CS301', name: 'Data Structures', branch: 'CSE', semester: 5, credits: 4 },
+                { _id: 'sub2', code: 'CS302', name: 'Database Systems', branch: 'CSE', semester: 5, credits: 3 },
+                { _id: 'sub3', code: 'CS303', name: 'Computer Networks', branch: 'CSE', semester: 5, credits: 3 },
+                { _id: 'sub4', code: 'ECE201', name: 'Digital Electronics', branch: 'ECE', semester: 4, credits: 4 },
+                { _id: 'sub5', code: 'CIVIL301', name: 'Structural Analysis', branch: 'CIVIL', semester: 5, credits: 4 },
+                { _id: 'sub6', code: 'CIVIL302', name: 'Concrete Technology', branch: 'CIVIL', semester: 5, credits: 3 }
             ];
 
-            const tableBody = document.getElementById('subjectsTableBody');
-            if (tableBody) {
-                tableBody.innerHTML = mockSubjectsData.map((subject, index) => `
-                    <tr>
-                        <td>${subject.code}</td>
-                        <td>${subject.name}</td>
-                        <td>${subject.branch}</td>
-                        <td>Semester ${subject.semester}</td>
-                        <td>${subject.credits}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editSubject(${index})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSubject(${index})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+            this.displaySubjectsTable(mockSubjectsData);
 
         } catch (error) {
             console.error('Error loading subjects:', error);
-            toast.error('Failed to load subjects');
+            toast.error('Failed to load subjects: ' + error.message);
+            
+            const tableBody = document.getElementById('subjectsTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Error loading subjects: ${error.message}
+                            <br><small class="text-muted mt-1">Please refresh the page or try again later</small>
+                        </td>
+                    </tr>
+                `;
+            }
         }
+    },
+
+    // Display subjects in the table
+    displaySubjectsTable(subjects) {
+        const tableBody = document.getElementById('subjectsTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = subjects.map((subject, index) => `
+                <tr>
+                    <td>${subject.code}</td>
+                    <td>${subject.name}</td>
+                    <td>${subject.branch}</td>
+                    <td>Semester ${subject.semester}</td>
+                    <td>${subject.credits}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editSubject('${subject._id}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubject('${subject._id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    },
+
+    // Populate branch dropdowns in subject forms
+    populateSubjectFormBranches(branches) {
+        const branchSelects = ['subjectBranch', 'editSubjectBranch'];
+        branchSelects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.innerHTML = '<option value="">Select Branch</option>';
+                branches.forEach(branch => {
+                    select.innerHTML += `<option value="${branch.code}">${branch.name} (${branch.code})</option>`;
+                });
+            }
+        });
     }
 };
 
@@ -1214,6 +1442,9 @@ async function addTimetableEntry() {
         room: document.getElementById('timetableRoom').value
     };
 
+    console.log('🔍 Timetable entry data:', entry);
+    console.log('📋 Subject ID being sent:', entry.subject);
+
     // Validate form
     if (!entry.branch || !entry.semester || !entry.subject || !entry.day || !entry.time || !entry.room) {
         toast.error('Please fill in all fields');
@@ -1229,6 +1460,24 @@ async function addTimetableEntry() {
 
     const [, startTime, endTime] = timeMatch;
 
+    const requestData = {
+        branch: entry.branch,
+        semester: entry.semester,
+        academicYear: '2024-2025', // You might want to make this dynamic
+        schedule: [{
+            day: entry.day,
+            timeSlots: [{
+                startTime: startTime,
+                endTime: endTime,
+                subject: entry.subject,
+                room: entry.room,
+                type: 'lecture'
+            }]
+        }]
+    };
+
+    console.log('📤 Sending request data:', JSON.stringify(requestData, null, 2));
+
     try {
         const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
         const response = await fetch('/api/timetable', {
@@ -1237,22 +1486,7 @@ async function addTimetableEntry() {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                branch: entry.branch,
-                semester: entry.semester,
-                academicYear: '2024-2025', // You might want to make this dynamic
-                schedule: [{
-                    day: entry.day,
-                    timeSlots: [{
-                        startTime: startTime,
-                        endTime: endTime,
-                        subject: entry.subject,
-                        room: entry.room,
-                        type: 'lecture'
-                    }]
-                }],
-                effectiveFrom: new Date().toISOString()
-            })
+            body: JSON.stringify(requestData)
         });
 
         const result = await response.json();

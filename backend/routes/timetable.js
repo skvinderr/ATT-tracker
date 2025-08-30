@@ -101,13 +101,13 @@ router.get('/:id', protect, async (req, res) => {
 // @access  Private (Admin only)
 router.post('/', protect, adminOnly, async (req, res) => {
     try {
-        const { branch, semester, academicYear, schedule, effectiveFrom, notes } = req.body;
+        const { branch, semester, academicYear, schedule } = req.body;
 
         // Validate required fields
-        if (!branch || !semester || !academicYear || !schedule || !effectiveFrom) {
+        if (!branch || !semester || !academicYear || !schedule) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide all required fields'
+                message: 'Please provide all required fields (branch, semester, academicYear, schedule)'
             });
         }
 
@@ -160,41 +160,26 @@ router.post('/', protect, adminOnly, async (req, res) => {
             });
         }
 
-        // Validate subjects in schedule - for now, create mock subjects if they don't exist
+        // Validate all subjects exist
         const subjectIds = [];
         for (const day of schedule) {
             for (const slot of day.timeSlots) {
-                // Create mock subject if it doesn't exist
-                let subject = await Subject.findById(slot.subject);
-                if (!subject) {
-                    // Create a new subject
-                    subject = new Subject({
-                        name: slot.subject === 'sub1' ? 'Data Structures' :
-                              slot.subject === 'sub2' ? 'Database Systems' :
-                              slot.subject === 'sub3' ? 'Computer Networks' :
-                              slot.subject === 'sub4' ? 'Digital Electronics' :
-                              slot.subject === 'sub5' ? 'Thermodynamics' : 'Unknown Subject',
-                        code: slot.subject === 'sub1' ? 'CS301' :
-                              slot.subject === 'sub2' ? 'CS302' :
-                              slot.subject === 'sub3' ? 'CS303' :
-                              slot.subject === 'sub4' ? 'ECE201' :
-                              slot.subject === 'sub5' ? 'MECH401' : 'UNK001',
-                        branch: branchDoc._id,
-                        semester: semester,
-                        credits: 3,
-                        type: 'theory',
-                        faculty: {
-                            name: 'Faculty Name',
-                            email: 'faculty@college.edu'
-                        }
-                    });
-                    await subject.save();
-                    slot.subject = subject._id;
-                } else {
-                    slot.subject = subject._id;
+                if (!subjectIds.includes(slot.subject)) {
+                    subjectIds.push(slot.subject);
                 }
-                subjectIds.push(slot.subject);
             }
+        }
+
+        // Check if all subjects exist
+        const existingSubjects = await Subject.find({ _id: { $in: subjectIds } });
+        if (existingSubjects.length !== subjectIds.length) {
+            const missingSubjects = subjectIds.filter(id => 
+                !existingSubjects.some(subject => subject._id.toString() === id)
+            );
+            return res.status(400).json({
+                success: false,
+                message: `Invalid subjects: ${missingSubjects.join(', ')}`
+            });
         }
 
         const newTimetable = new Timetable({
@@ -202,8 +187,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
             semester,
             academicYear,
             schedule,
-            effectiveFrom: new Date(effectiveFrom),
-            notes,
+            effectiveFrom: new Date(),
             isActive: true
         });
 
