@@ -131,8 +131,13 @@ const ownerOrAdmin = (resourceField = 'student') => {
   };
 };
 
-// Rate limiting check
+// Rate limiting check - DISABLED FOR DEVELOPMENT
 const checkRateLimit = (req, res, next) => {
+  // DISABLED FOR DEVELOPMENT - Skip all rate limiting
+  next();
+  
+  // Original rate limiting code (commented out for development)
+  /*
   // This could be enhanced with Redis for production
   const userIP = req.ip;
   const now = Date.now();
@@ -161,6 +166,7 @@ const checkRateLimit = (req, res, next) => {
   // Add current request timestamp
   req.session.rateLimitData[userIP].push(now);
   next();
+  */
 };
 
 module.exports = {

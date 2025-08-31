@@ -157,40 +157,107 @@ const PageManager = {
             // Show loading state
             this.showDashboardLoading();
 
-            // For now, we'll use mock data since backend isn't fully implemented
-            const mockData = {
-                overallAttendance: 78,
-                classesAttended: 42,
-                totalClasses: 54,
-                totalSubjects: 6,
-                subjects: [
-                    { name: 'Data Structures', code: 'CS301', attendance: 82, total: 20, attended: 16 },
-                    { name: 'Database Systems', code: 'CS302', attendance: 75, total: 18, attended: 14 },
-                    { name: 'Computer Networks', code: 'CS303', attendance: 68, total: 16, attended: 11 },
-                    { name: 'Operating Systems', code: 'CS304', attendance: 85, total: 15, attended: 13 },
-                    { name: 'Software Engineering', code: 'CS305', attendance: 90, total: 12, attended: 11 },
-                    { name: 'Machine Learning', code: 'CS306', attendance: 70, total: 10, attended: 7 }
-                ],
-                todayClasses: [
-                    { subject: 'Data Structures', time: '09:00-10:00', room: 'CS-101', status: 'upcoming' },
-                    { subject: 'Database Systems', time: '11:00-12:00', room: 'CS-102', status: 'upcoming' }
-                ]
-            };
+            const user = authManager.getCurrentUser();
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+
+            // Fetch student's timetable data
+            let subjects = [];
+            let todayClasses = [];
+            
+            try {
+                // Get student's timetable
+                const timetableResponse = await fetch('/api/timetable', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (timetableResponse.ok) {
+                    const timetableResult = await timetableResponse.json();
+                    console.log('Student timetable data:', timetableResult);
+                    
+                    if (timetableResult.success && timetableResult.data && timetableResult.data.length > 0) {
+                        const timetable = timetableResult.data[0]; // Get first active timetable
+                        
+                        // Extract unique subjects from timetable
+                        const subjectSet = new Set();
+                        const today = new Date();
+                        const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+                        
+                        timetable.schedule.forEach(day => {
+                            day.timeSlots.forEach(slot => {
+                                if (slot.subject) {
+                                    subjectSet.add(JSON.stringify({
+                                        id: slot.subject._id,
+                                        name: slot.subject.name,
+                                        code: slot.subject.code
+                                    }));
+                                }
+                                
+                                // Check if it's today's class
+                                if (day.day === todayName) {
+                                    todayClasses.push({
+                                        subject: slot.subject.name,
+                                        time: `${slot.startTime}-${slot.endTime}`,
+                                        room: slot.room,
+                                        status: 'upcoming'
+                                    });
+                                }
+                            });
+                        });
+                        
+                        // Convert set back to array and add mock attendance data
+                        subjects = Array.from(subjectSet).map(subjectStr => {
+                            const subject = JSON.parse(subjectStr);
+                            return {
+                                name: subject.name,
+                                code: subject.code,
+                                attendance: Math.floor(Math.random() * 30) + 70, // Mock attendance 70-100%
+                                total: Math.floor(Math.random() * 10) + 15, // Mock total classes 15-25
+                                attended: 0 // Will be calculated
+                            };
+                        });
+                        
+                        // Calculate attended classes based on attendance percentage
+                        subjects.forEach(subject => {
+                            subject.attended = Math.floor((subject.attendance / 100) * subject.total);
+                        });
+                        
+                        console.log('Extracted subjects from timetable:', subjects);
+                        console.log('Today\'s classes:', todayClasses);
+                    }
+                }
+            } catch (apiError) {
+                console.log('Failed to fetch timetable, using fallback data:', apiError);
+            }
+
+            // Fallback to mock data if no timetable found
+            if (subjects.length === 0) {
+                subjects = [
+                    { name: 'No subjects found', code: 'N/A', attendance: 0, total: 0, attended: 0 }
+                ];
+            }
+
+            // Calculate overall statistics
+            const totalClasses = subjects.reduce((sum, subject) => sum + subject.total, 0);
+            const totalAttended = subjects.reduce((sum, subject) => sum + subject.attended, 0);
+            const overallAttendance = totalClasses > 0 ? Math.round((totalAttended / totalClasses) * 100) : 0;
 
             // Update quick stats
-            document.getElementById('overallAttendance').textContent = `${mockData.overallAttendance}%`;
-            document.getElementById('classesAttended').textContent = mockData.classesAttended;
-            document.getElementById('totalClasses').textContent = mockData.totalClasses;
-            document.getElementById('totalSubjects').textContent = mockData.totalSubjects;
+            document.getElementById('overallAttendance').textContent = `${overallAttendance}%`;
+            document.getElementById('classesAttended').textContent = totalAttended;
+            document.getElementById('totalClasses').textContent = totalClasses;
+            document.getElementById('totalSubjects').textContent = subjects.length;
 
             // Update subject-wise attendance
-            this.renderSubjectAttendance(mockData.subjects);
+            this.renderSubjectAttendance(subjects);
 
             // Update today's classes
-            this.renderTodayClasses(mockData.todayClasses);
+            this.renderTodayClasses(todayClasses);
 
             // Create attendance chart
-            this.createAttendanceChart(mockData.subjects);
+            this.createAttendanceChart(subjects);
 
         } catch (error) {
             console.error('Error loading student dashboard:', error);
@@ -497,7 +564,7 @@ const PageManager = {
             if (tableBody) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center text-danger">
+                        <td colspan="7" class="text-center text-danger">
                             <p>Error loading timetable</p>
                             <small>Please try refreshing the page</small>
                         </td>
@@ -515,7 +582,7 @@ const PageManager = {
         if (timetables.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center text-muted">
+                    <td colspan="7" class="text-center text-muted">
                         <p>No timetable available</p>
                         <small>Contact administration for schedule updates</small>
                     </td>
@@ -540,6 +607,8 @@ const PageManager = {
                     daySchedule.timeSlots.forEach(slot => {
                         weeklySchedule[daySchedule.day].push({
                             subject: slot.subject.name,
+                            startTime: slot.startTime,
+                            endTime: slot.endTime,
                             time: `${slot.startTime}-${slot.endTime}`,
                             room: slot.room || 'N/A',
                             type: slot.type || 'lecture'
@@ -552,36 +621,54 @@ const PageManager = {
         // Sort time slots by start time for each day
         Object.keys(weeklySchedule).forEach(day => {
             weeklySchedule[day].sort((a, b) => {
-                const timeA = a.time.split('-')[0];
-                const timeB = b.time.split('-')[0];
+                const timeA = a.startTime;
+                const timeB = b.startTime;
                 return timeA.localeCompare(timeB);
             });
         });
 
+        // Get all unique time slots across all days
+        const allTimeSlots = new Set();
+        Object.values(weeklySchedule).forEach(daySlots => {
+            daySlots.forEach(slot => {
+                allTimeSlots.add(slot.time);
+            });
+        });
+
+        // Sort time slots
+        const sortedTimeSlots = Array.from(allTimeSlots).sort((a, b) => {
+            const timeA = a.split('-')[0];
+            const timeB = b.split('-')[0];
+            return timeA.localeCompare(timeB);
+        });
+
         // Generate table HTML
-        const maxSlots = Math.max(...Object.values(weeklySchedule).map(day => day.length));
         let tableHTML = '';
 
-        for (let i = 0; i < maxSlots; i++) {
+        sortedTimeSlots.forEach(timeSlot => {
             tableHTML += '<tr>';
-            Object.keys(weeklySchedule).forEach(day => {
-                const slot = weeklySchedule[day][i];
+            tableHTML += `<td><strong>${timeSlot}</strong></td>`;
+            
+            // Check each day for this time slot
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach(day => {
+                const slot = weeklySchedule[day].find(s => s.time === timeSlot);
                 if (slot) {
-                    const typeColor = slot.type === 'lab' ? 'bg-info' : 
-                                     slot.type === 'tutorial' ? 'bg-warning' : 'bg-light';
+                    const typeColor = slot.type === 'lab' ? 'table-info' : 
+                                     slot.type === 'tutorial' ? 'table-warning' : 
+                                     slot.type === 'practical' ? 'table-primary' :
+                                     slot.type === 'seminar' ? 'table-success' : '';
                     tableHTML += `
                         <td class="${typeColor}">
                             <div class="fw-bold">${slot.subject}</div>
-                            <small class="text-muted">${slot.time}</small><br>
                             <small class="text-muted">${slot.room}</small>
                         </td>
                     `;
                 } else {
-                    tableHTML += '<td class="bg-light text-center text-muted">-</td>';
+                    tableHTML += '<td class="text-center text-muted">-</td>';
                 }
             });
             tableHTML += '</tr>';
-        }
+        });
 
         tableBody.innerHTML = tableHTML;
 

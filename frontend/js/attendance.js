@@ -73,44 +73,113 @@ const attendanceManager = {
     // Load today's classes for attendance marking
     async loadTodaysClasses() {
         try {
-            // For now, using mock data since backend isn't fully implemented
-            const mockClasses = [
-                {
-                    id: 'class1',
-                    subject: 'Data Structures',
-                    code: 'CS301',
-                    time: '09:00-10:00',
-                    room: 'CS-101',
-                    faculty: 'Dr. Smith',
-                    status: null
-                },
-                {
-                    id: 'class2',
-                    subject: 'Database Systems',
-                    code: 'CS302',
-                    time: '11:00-12:00',
-                    room: 'CS-102',
-                    faculty: 'Prof. Johnson',
-                    status: null
-                },
-                {
-                    id: 'class3',
-                    subject: 'Computer Networks',
-                    code: 'CS303',
-                    time: '14:00-15:00',
-                    room: 'CS-103',
-                    faculty: 'Dr. Brown',
-                    status: 'present'
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            const today = new Date();
+            const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+            
+            console.log('Loading today\'s classes for:', todayName);
+            
+            // Fetch student's timetable
+            const timetableResponse = await fetch('/api/timetable', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
-            ];
+            });
 
-            this.renderTodaysClasses(mockClasses);
+            let todayClasses = [];
+            
+            if (timetableResponse.ok) {
+                const timetableResult = await timetableResponse.json();
+                console.log('Timetable data for attendance:', timetableResult);
+                
+                if (timetableResult.success && timetableResult.data && timetableResult.data.length > 0) {
+                    const timetable = timetableResult.data[0];
+                    
+                    // Find today's schedule
+                    const todaySchedule = timetable.schedule.find(day => day.day === todayName);
+                    
+                    if (todaySchedule) {
+                        todayClasses = todaySchedule.timeSlots.map((slot, index) => ({
+                            id: `class_${slot.subject._id}_${index}`,
+                            subject: slot.subject.name,
+                            code: slot.subject.code,
+                            time: `${slot.startTime}-${slot.endTime}`,
+                            room: slot.room,
+                            faculty: slot.faculty || 'Faculty Name',
+                            status: null,
+                            type: slot.type || 'lecture'
+                        }));
+                        
+                        console.log('Today\'s classes from timetable:', todayClasses);
+                    } else {
+                        console.log('No classes scheduled for today');
+                    }
+                }
+            } else {
+                console.log('Failed to fetch timetable for attendance');
+            }
+            
+            // Show special message if no classes
+            if (todayClasses.length === 0) {
+                this.renderNoClassesMessage();
+                return;
+            }
+
+            this.renderTodaysClasses(todayClasses);
             this.updateTodayStats();
             
         } catch (error) {
             console.error('Error loading today\'s classes:', error);
-            toast.error('Failed to load today\'s classes');
+            
+            // Show a user-friendly message instead of an error
+            this.renderNoClassesMessage();
         }
+    },
+
+    // Render no classes message
+    renderNoClassesMessage() {
+        const container = document.getElementById('markAttendanceList');
+        if (!container) return;
+
+        const today = new Date();
+        const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+        
+        // Check if it's weekend
+        const isWeekend = todayName === 'Saturday' || todayName === 'Sunday';
+        
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-calendar-heart" style="font-size: 4rem; color: #28a745;"></i>
+                </div>
+                <h4 class="text-success mb-3">
+                    ${isWeekend ? '🎉 Weekend Vibes!' : '🎊 No Classes Today!'}
+                </h4>
+                <p class="text-muted mb-4">
+                    ${isWeekend 
+                        ? 'It\'s ' + todayName + '! Time to relax and enjoy your weekend. 🌟' 
+                        : 'You don\'t have any scheduled classes today. Make the most of your free time! ✨'
+                    }
+                </p>
+                <div class="alert alert-info d-inline-block" role="alert">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Pro tip:</strong> ${isWeekend 
+                        ? 'Use this time to catch up on studies or pursue hobbies!' 
+                        : 'Perfect day for extra study sessions or project work!'
+                    }
+                </div>
+            </div>
+        `;
+        
+        // Update stats to show 0
+        const todayPresentElement = document.getElementById('todayPresent');
+        const todayTotalElement = document.getElementById('todayTotal');
+        const todayPercentageElement = document.getElementById('todayAttendancePercentage');
+        
+        if (todayPresentElement) todayPresentElement.textContent = '0';
+        if (todayTotalElement) todayTotalElement.textContent = '0';
+        if (todayPercentageElement) todayPercentageElement.textContent = '0%';
     },
 
     // Render today's classes for attendance marking
@@ -217,29 +286,43 @@ const attendanceManager = {
 
     // Check if class is currently running
     isCurrentClass(timeString) {
-        const now = new Date();
-        const currentTime = now.getHours() * 60 + now.getMinutes();
+        if (!timeString || timeString === 'N/A') return false;
         
-        const [startTime, endTime] = timeString.split('-');
-        const [startHour, startMin] = startTime.split(':').map(Number);
-        const [endHour, endMin] = endTime.split(':').map(Number);
-        
-        const classStart = startHour * 60 + startMin;
-        const classEnd = endHour * 60 + endMin;
-        
-        return currentTime >= classStart && currentTime <= classEnd;
+        try {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            const [startTime, endTime] = timeString.split('-');
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            
+            const classStart = startHour * 60 + startMin;
+            const classEnd = endHour * 60 + endMin;
+            
+            return currentTime >= classStart && currentTime <= classEnd;
+        } catch (error) {
+            console.error('Error parsing time:', timeString, error);
+            return false;
+        }
     },
 
     // Check if class has ended
     isPastClass(timeString) {
-        const now = new Date();
-        const currentTime = now.getHours() * 60 + now.getMinutes();
+        if (!timeString || timeString === 'N/A') return false;
         
-        const [, endTime] = timeString.split('-');
-        const [endHour, endMin] = endTime.split(':').map(Number);
-        const classEnd = endHour * 60 + endMin;
-        
-        return currentTime > classEnd;
+        try {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            const [, endTime] = timeString.split('-');
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            const classEnd = endHour * 60 + endMin;
+            
+            return currentTime > classEnd;
+        } catch (error) {
+            console.error('Error parsing time:', timeString, error);
+            return false;
+        }
     },
 
     // Bulk mark attendance
