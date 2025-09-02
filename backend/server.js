@@ -14,6 +14,7 @@ const authRoutes = require('./routes/auth');
 const timetableRoutes = require('./routes/timetable');
 const subjectRoutes = require('./routes/subjects');
 const branchRoutes = require('./routes/branches');
+const dashboardRoutes = require('./routes/dashboard');
 
 // Initialize Express app
 const app = express();
@@ -79,6 +80,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/timetable', timetableRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/branches', branchRoutes);
@@ -108,7 +110,37 @@ app.get('/api', (req, res) => {
 });
 
 // Serve frontend for all non-API routes (SPA support)
+app.get('/', (req, res) => {
+  console.log(`${new Date().toISOString()} - ✅ GET / - Homepage request received!`);
+  res.sendFile(path.join(__dirname, '../frontend', 'home.html'));
+});
+
+app.get('/test', (req, res) => {
+  console.log(`${new Date().toISOString()} - ✅ GET /test - Test route accessed!`);
+  res.send(`
+    <html>
+      <body style="background: green; color: white; padding: 50px; text-align: center; font-family: Arial;">
+        <h1>✅ SERVER IS WORKING!</h1>
+        <p>If you can see this page, the server is running correctly.</p>
+        <a href="/" style="color: yellow;">Try Homepage</a> | 
+        <a href="/app" style="color: yellow;">Go to App</a>
+      </body>
+    </html>
+  `);
+});
+
+app.get('/home', (req, res) => {
+  console.log(`${new Date().toISOString()} - GET /home`);
+  res.sendFile(path.join(__dirname, '../frontend', 'homepage-simple.html'));
+});
+
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend', 'app.html'));
+});
+
 app.get('*', (req, res) => {
+  console.log(`${new Date().toISOString()} - 🔍 Request: ${req.originalUrl}`);
+  
   // Don't serve frontend for API routes
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({
@@ -117,7 +149,14 @@ app.get('*', (req, res) => {
     });
   }
   
-  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+  // Skip dev tools and favicon requests
+  if (req.path.includes('.well-known') || req.path.includes('favicon')) {
+    return res.status(404).end();
+  }
+  
+  // For ANY other request, serve the homepage
+  console.log(`${new Date().toISOString()} - ✅ Serving home.html for: ${req.originalUrl}`);
+  res.sendFile(path.join(__dirname, '../frontend', 'home.html'));
 });
 
 // Global error handler
