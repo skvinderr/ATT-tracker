@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "build": "echo 'Build completed'",
+    "build": "echo 'Build completed successfully'",
+    "vercel-build": "echo 'Vercel build completed'",
     "seed": "node backend/config/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
