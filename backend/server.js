@@ -6,42 +6,61 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 
-// Import database connection
-const connectDB = require('./config/database');
-
-// Import routes
-const authRoutes = require('./routes/auth');
-const timetableRoutes = require('./routes/timetable');
-const subjectRoutes = require('./routes/subjects');
-const branchRoutes = require('./routes/branches');
-const dashboardRoutes = require('./routes/dashboard');
-
-// Initialize Express app
+// Initialize Express app first
 const app = express();
 
-// Connect to database
-connectDB();
+// Basic error handling to prevent crashes
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err.message);
+  console.error('Stack:', err.stack);
+  // Don't exit in development
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit in development
+});
+
+// Import database connection with error handling
+let connectDB;
+try {
+  connectDB = require('./config/database');
+  
+  // Try to connect to database but don't crash if it fails
+  connectDB().catch(err => {
+    console.error('Database connection failed:', err.message);
+    console.log('Server will continue without database connection');
+  });
+} catch (error) {
+  console.error('Error loading database module:', error.message);
+  console.log('Server will continue without database connection');
+}
+
+// Import routes with error handling
+let authRoutes, timetableRoutes, subjectRoutes, branchRoutes, dashboardRoutes;
+
+try {
+  authRoutes = require('./routes/auth');
+  timetableRoutes = require('./routes/timetable');
+  subjectRoutes = require('./routes/subjects');
+  branchRoutes = require('./routes/branches');
+  dashboardRoutes = require('./routes/dashboard');
+} catch (error) {
+  console.error('Error loading routes:', error.message);
+  console.log('Some API routes may not be available');
+}
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
-      'script-src-attr': ["'unsafe-inline'"]
-    }
-  }
+  contentSecurityPolicy: false, // Disable for development to avoid issues
+  crossOriginEmbedderPolicy: false
 }));
 
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://yourproductiondomain.com'] // Replace with your domain
-    : ['http://localhost:3000', 'http://localhost:4000', 'http://localhost:5000', 'http://127.0.0.1:5500'],
+    : true, // Allow all origins in development
   credentials: true
 }));
 
@@ -70,20 +89,18 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Request logging middleware (development only)
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-  });
-}
+// Request logging middleware (always enabled for debugging)
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/timetable', timetableRoutes);
-app.use('/api/subjects', subjectRoutes);
-app.use('/api/branches', branchRoutes);
+// API Routes (only if they loaded successfully)
+if (authRoutes) app.use('/api/auth', authRoutes);
+if (dashboardRoutes) app.use('/api/dashboard', dashboardRoutes);
+if (timetableRoutes) app.use('/api/timetable', timetableRoutes);
+if (subjectRoutes) app.use('/api/subjects', subjectRoutes);
+if (branchRoutes) app.use('/api/branches', branchRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -112,7 +129,18 @@ app.get('/api', (req, res) => {
 // Serve frontend for all non-API routes (SPA support)
 app.get('/', (req, res) => {
   console.log(`${new Date().toISOString()} - ✅ GET / - Homepage request received!`);
-  res.sendFile(path.join(__dirname, '../frontend', 'home.html'));
+  // Try to serve simple-home.html first, fall back to home.html
+  res.sendFile(path.join(__dirname, '../frontend', 'simple-home.html'), (err) => {
+    if (err) {
+      console.log('simple-home.html not found, trying home.html');
+      res.sendFile(path.join(__dirname, '../frontend', 'home.html'), (err2) => {
+        if (err2) {
+          console.error('Error serving homepage:', err2.message);
+          res.status(500).send('<h1>Error loading homepage</h1><p>Please check server logs</p>');
+        }
+      });
+    }
+  });
 });
 
 app.get('/test', (req, res) => {
