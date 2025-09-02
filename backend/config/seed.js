@@ -534,59 +534,72 @@ const seedDatabase = async () => {
                 const civilSubjectsCreated = await Subject.create(civilSubjects);
                 console.log(`Created ${civilSubjectsCreated.length} Civil Engineering subjects`);
 
-                // Create timetable for Civil Engineering semester 5
+                // Create timetable for Civil Engineering semester 3
                 console.log('Creating Civil Engineering timetable...');
                 const civilTimetableData = {
                     branch: civilBranch._id,
-                    semester: 5,
+                    semester: 3,
                     academicYear: '2024-2025',
                     effectiveFrom: new Date('2024-08-01'),
                     schedule: [
                         {
                             day: 'Monday',
                             timeSlots: [
-                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[0]._id, room: 'CE-101', type: 'lecture' },
-                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[1]._id, room: 'CE-102', type: 'lecture' },
-                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[2]._id, room: 'CE-103', type: 'lecture' },
-                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[6]._id, room: 'CE-Lab1', type: 'lab' }
+                                { startTime: '09:30', endTime: '10:20', subject: civilSubjectsCreated[0]._id, room: 'SH', type: 'lecture' }, // EM(L)(SH)
+                                { startTime: '10:20', endTime: '11:10', subject: civilSubjectsCreated[1]._id, room: 'RA', type: 'lecture' }, // SUR&GEO(L)(RA)
+                                { startTime: '11:10', endTime: '12:00', subject: civilSubjectsCreated[2]._id, room: 'HKG', type: 'lecture' }, // FM(L)(HKG)
+                                { startTime: '12:00', endTime: '12:50', subject: civilSubjectsCreated[3]._id, room: 'SK', type: 'lecture' }, // S&I(L)(SK)
+                                { startTime: '14:00', endTime: '14:50', subject: civilSubjectsCreated[1]._id, room: 'VG/RA', type: 'lab' }, // SUR&GEO(CE1)(P)(VG/RA)
+                                { startTime: '14:50', endTime: '15:40', subject: civilSubjectsCreated[8]._id, room: 'SH', type: 'lab' } // BPD(CE2)(P)(SH)
                             ]
                         },
                         {
                             day: 'Tuesday',
                             timeSlots: [
-                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[3]._id, room: 'CE-104', type: 'lecture' },
-                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[4]._id, room: 'CE-105', type: 'lecture' },
-                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[5]._id, room: 'CE-106', type: 'lecture' },
-                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[7]._id, room: 'CE-Lab2', type: 'lab' }
+                                { startTime: '09:30', endTime: '10:20', subject: civilSubjectsCreated[3]._id, room: 'SK', type: 'lecture' }, // S&I(L)(SK)
+                                { startTime: '10:20', endTime: '11:10', subject: civilSubjectsCreated[1]._id, room: 'RA', type: 'lecture' }, // SUR&GEO(L)(RA)
+                                { startTime: '11:10', endTime: '12:00', subject: civilSubjectsCreated[4]._id, room: 'AK', type: 'lecture' }, // UHV(L)(AK)
+                                { startTime: '12:00', endTime: '12:50', subject: civilSubjectsCreated[0]._id, room: 'SH', type: 'lecture' }, // EM(L)(SH)
+                                { startTime: '14:00', endTime: '14:50', subject: civilSubjectsCreated[1]._id, room: 'VG/RA', type: 'lab' }, // SUR&GEO(CE2)(P)(VG/RA)
+                                { startTime: '14:50', endTime: '15:40', subject: civilSubjectsCreated[2]._id, room: 'CH/HKG', type: 'lab' } // FM(CE1)(P)(CH/HKG)
                             ]
                         },
                         {
                             day: 'Wednesday',
                             timeSlots: [
-                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[0]._id, room: 'CE-101', type: 'lecture' },
-                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[2]._id, room: 'CE-103', type: 'lecture' },
-                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[1]._id, room: 'CE-102', type: 'lecture' }
+                                { startTime: '09:30', endTime: '10:20', subject: civilSubjectsCreated[3]._id, room: 'SK', type: 'lecture' }, // S&I(L)(SK)
+                                { startTime: '10:20', endTime: '11:10', subject: civilSubjectsCreated[1]._id, room: 'RA', type: 'lecture' }, // SUR&GEO(L)(RA)
+                                { startTime: '11:10', endTime: '12:00', subject: civilSubjectsCreated[2]._id, room: 'HKG', type: 'lecture' }, // FM(L)(HKG)
+                                { startTime: '12:00', endTime: '12:50', subject: civilSubjectsCreated[5]._id, room: 'SU', type: 'lecture' }, // CS(L)(SU)
+                                { startTime: '14:00', endTime: '14:50', subject: civilSubjectsCreated[6]._id, room: 'VG/BP', type: 'lab' }, // GEOTECH(CE1)(P)(VG/BP)
+                                { startTime: '14:50', endTime: '15:40', subject: civilSubjectsCreated[7]._id, room: 'SH/CH', type: 'lab' } // CAD(CE2)(P)(SH/CH)
                             ]
                         },
                         {
                             day: 'Thursday',
                             timeSlots: [
-                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[3]._id, room: 'CE-104', type: 'lecture' },
-                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[5]._id, room: 'CE-106', type: 'lecture' },
-                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[8]._id, room: 'CE-Lab3', type: 'lab' }
+                                { startTime: '09:30', endTime: '10:20', subject: civilSubjectsCreated[5]._id, room: 'SU', type: 'lecture' }, // CS(L)(SU)
+                                { startTime: '10:20', endTime: '11:10', subject: civilSubjectsCreated[1]._id, room: 'RA', type: 'tutorial' }, // SUR&GEO(T)(RA)
+                                { startTime: '11:10', endTime: '12:00', subject: civilSubjectsCreated[3]._id, room: 'SK', type: 'tutorial' }, // S&I(T)(SK)
+                                { startTime: '12:00', endTime: '12:50', subject: civilSubjectsCreated[4]._id, room: 'AK', type: 'lecture' }, // UHV(L)(AK)
+                                { startTime: '14:00', endTime: '17:00', subject: civilSubjectsCreated[8]._id, room: 'Project Room', type: 'seminar' } // Mini Project
                             ]
                         },
                         {
                             day: 'Friday',
                             timeSlots: [
-                                { startTime: '09:00', endTime: '10:00', subject: civilSubjectsCreated[0]._id, room: 'CE-101', type: 'lecture' },
-                                { startTime: '10:00', endTime: '11:00', subject: civilSubjectsCreated[2]._id, room: 'CE-103', type: 'lecture' },
-                                { startTime: '11:00', endTime: '12:00', subject: civilSubjectsCreated[4]._id, room: 'CE-105', type: 'lecture' }
+                                { startTime: '10:20', endTime: '11:10', subject: civilSubjectsCreated[0]._id, room: 'SH', type: 'lecture' }, // EM(L)(SH)
+                                { startTime: '11:10', endTime: '12:00', subject: civilSubjectsCreated[2]._id, room: 'HKG', type: 'lecture' }, // FM(L)(HKG)
+                                { startTime: '14:00', endTime: '14:50', subject: civilSubjectsCreated[2]._id, room: 'CH/HKG', type: 'lab' }, // FM(CE2)(P)(CH/HKG)
+                                { startTime: '14:50', endTime: '15:40', subject: civilSubjectsCreated[8]._id, room: 'SH', type: 'lab' } // BPD(CE1)(P)(SH)
                             ]
                         },
                         {
                             day: 'Saturday',
-                            timeSlots: []
+                            timeSlots: [
+                                { startTime: '10:20', endTime: '11:10', subject: civilSubjectsCreated[0]._id, room: 'SH', type: 'lecture' }, // EM(L)(SH)
+                                { startTime: '11:10', endTime: '12:00', subject: civilSubjectsCreated[4]._id, room: 'AK', type: 'lecture' } // UHV(L)(AK)
+                            ]
                         },
                         {
                             day: 'Sunday',
