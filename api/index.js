@@ -9,21 +9,14 @@ if (!process.env.VERCEL) {
   require('dotenv').config();
 }
 
-// Import database connection
-const connectDB = require('../backend/config/database');
-
-// Import routes
-const authRoutes = require('../backend/routes/auth');
-const timetableRoutes = require('../backend/routes/timetable');
-const subjectRoutes = require('../backend/routes/subjects');
-const branchRoutes = require('../backend/routes/branches');
-const dashboardRoutes = require('../backend/routes/dashboard');
-
 // Initialize Express app
 const app = express();
 
 // Global variable to track database connection
 global.dbConnected = false;
+
+// Import database connection
+const connectDB = require('../backend/config/database');
 
 // Initialize database connection
 async function initializeDatabase() {
@@ -35,30 +28,22 @@ async function initializeDatabase() {
     } catch (error) {
       console.error('Database connection failed:', error);
       global.dbConnected = false;
+      // Don't throw in serverless - just continue without DB
     }
   }
 }
 
-// Security middleware
+// Security middleware with relaxed CSP for development
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
-      'script-src-attr': ["'unsafe-inline'"]
-    }
-  }
+  contentSecurityPolicy: false, // Disable for now to avoid issues
+  crossOriginEmbedderPolicy: false
 }));
 
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [process.env.FRONTEND_URL, 'https://vercel.app', 'https://*.vercel.app']
-    : ['http://localhost:3000', 'http://localhost:4000', 'http://localhost:5000', 'http://127.0.0.1:5500'],
+    : true, // Allow all origins in development
   credentials: true
 }));
 
@@ -67,21 +52,45 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 // Initialize database for each request (serverless-friendly)
 app.use(async (req, res, next) => {
-  await initializeDatabase();
+  try {
+    await initializeDatabase();
+  } catch (error) {
+    console.error('Database initialization error:', error);
+  }
   next();
 });
 
 // Serve static files from frontend directory
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/timetable', timetableRoutes);
-app.use('/api/subjects', subjectRoutes);
-app.use('/api/branches', branchRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+// Import routes only after database setup
+let authRoutes, timetableRoutes, subjectRoutes, branchRoutes, dashboardRoutes;
+
+try {
+  authRoutes = require('../backend/routes/auth');
+  timetableRoutes = require('../backend/routes/timetable');
+  subjectRoutes = require('../backend/routes/subjects');
+  branchRoutes = require('../backend/routes/branches');
+  dashboardRoutes = require('../backend/routes/dashboard');
+  
+  // API Routes
+  app.use('/api/auth', authRoutes);
+  app.use('/api/timetable', timetableRoutes);
+  app.use('/api/subjects', subjectRoutes);
+  app.use('/api/branches', branchRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
+} catch (error) {
+  console.error('Error loading routes:', error);
+  // Continue without API routes if there's an error
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
