@@ -42,7 +42,12 @@ const connectDB = async () => {
 
   } catch (error) {
     console.error('Database connection error:', error);
-    process.exit(1);
+    // Don't exit in serverless environments, just throw the error
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+      throw error;
+    } else {
+      process.exit(1);
+    }
   }
 };
 

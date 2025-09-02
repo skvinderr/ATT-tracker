@@ -5,6 +5,15 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Validate required environment variables
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '));
+  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+}
+
 // Import database connection
 const connectDB = require('../backend/config/database');
 
@@ -19,10 +28,16 @@ const dashboardRoutes = require('../backend/routes/dashboard');
 const app = express();
 
 // Connect to database with error handling
-connectDB().catch(err => {
-  console.error('Failed to connect to database:', err);
-  process.exit(1);
-});
+let dbConnected = false;
+connectDB()
+  .then(() => {
+    dbConnected = true;
+    console.log('Database connected successfully');
+  })
+  .catch(err => {
+    console.error('Failed to connect to database:', err);
+    dbConnected = false;
+  });
 
 // Security middleware
 app.use(helmet({
@@ -64,11 +79,43 @@ app.use('/api/dashboard', dashboardRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+  const envCheck = {
+    MONGODB_URI: !!process.env.MONGODB_URI,
+    JWT_SECRET: !!process.env.JWT_SECRET,
+    NODE_ENV: process.env.NODE_ENV || 'not set'
+  };
+  
+  res.status(dbConnected ? 200 : 503).json({ 
+    status: dbConnected ? 'OK' : 'Error', 
+    message: dbConnected ? 'Server is running' : 'Database connection failed',
+    database: dbConnected ? 'Connected' : 'Disconnected',
+    environment: envCheck,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Debug endpoint for troubleshooting
+app.get('/api/debug', (req, res) => {
+  res.status(200).json({
+    message: 'Debug endpoint',
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasMongoURI: !!process.env.MONGODB_URI,
+      hasJWTSecret: !!process.env.JWT_SECRET,
+      isVercel: !!process.env.VERCEL,
+      platform: process.platform,
+      nodeVersion: process.version
+    },
+    database: dbConnected,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Simple test endpoint that doesn't require database
+app.get('/api/test', (req, res) => {
+  res.status(200).json({
+    message: 'API is working',
+    timestamp: new Date().toISOString()
   });
 });
 
