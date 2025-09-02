@@ -2,7 +2,7 @@
   "name": "college-attendance-tracker",
   "version": "1.0.0",
   "description": "Comprehensive college attendance tracking system",
-  "main": "backend/server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",

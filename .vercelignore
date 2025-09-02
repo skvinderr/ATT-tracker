@@ -1,11 +1,38 @@
+# Environment files
 .env
 .env.local
 .env.production.local
 .env.development.local
+
+# Dependencies
 node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.DS_Store
-.vscode
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+logs
 *.log
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Local development files (use api/index.js for Vercel)
+backend/server.js
