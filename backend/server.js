@@ -129,43 +129,25 @@ app.get('/api', (req, res) => {
 // Serve frontend for all non-API routes (SPA support)
 app.get('/', (req, res) => {
   console.log(`${new Date().toISOString()} - ✅ GET / - Homepage request received!`);
-  // Try to serve simple-home.html first, fall back to home.html
-  res.sendFile(path.join(__dirname, '../frontend', 'simple-home.html'), (err) => {
-    if (err) {
-      console.log('simple-home.html not found, trying home.html');
-      res.sendFile(path.join(__dirname, '../frontend', 'home.html'), (err2) => {
-        if (err2) {
-          console.error('Error serving homepage:', err2.message);
-          res.status(500).send('<h1>Error loading homepage</h1><p>Please check server logs</p>');
-        }
-      });
-    }
-  });
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-app.get('/test', (req, res) => {
-  console.log(`${new Date().toISOString()} - ✅ GET /test - Test route accessed!`);
-  res.send(`
-    <html>
-      <body style="background: green; color: white; padding: 50px; text-align: center; font-family: Arial;">
-        <h1>✅ SERVER IS WORKING!</h1>
-        <p>If you can see this page, the server is running correctly.</p>
-        <a href="/" style="color: yellow;">Try Homepage</a> | 
-        <a href="/app" style="color: yellow;">Go to App</a>
-      </body>
-    </html>
-  `);
+// Handle favicon
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
 });
 
-app.get('/home', (req, res) => {
-  console.log(`${new Date().toISOString()} - GET /home`);
-  res.sendFile(path.join(__dirname, '../frontend', 'homepage-simple.html'));
+// Handle Chrome devtools
+app.get('/.well-known/*', (req, res) => {
+  res.status(404).end();
 });
 
+// Main app route
 app.get('/app', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend', 'app.html'));
 });
 
+// Serve other frontend files for SPA support
 app.get('*', (req, res) => {
   console.log(`${new Date().toISOString()} - 🔍 Request: ${req.originalUrl}`);
   
@@ -182,9 +164,8 @@ app.get('*', (req, res) => {
     return res.status(404).end();
   }
   
-  // For ANY other request, serve the homepage
-  console.log(`${new Date().toISOString()} - ✅ Serving home.html for: ${req.originalUrl}`);
-  res.sendFile(path.join(__dirname, '../frontend', 'home.html'));
+  // For all other routes, serve the main app
+  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
 // Global error handler
@@ -227,7 +208,7 @@ app.use('/api/*', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);

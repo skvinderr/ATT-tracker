@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>SmartAttend - Smart College Attendance Management System</title>
+    
+    <!-- Use existing CSS from the project -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Inline fonts and icons to avoid CSP issues -->
+    <style>
+        /* Font fallbacks */
+        body, .hero-title, .navbar-brand {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+        }
+        
+        /* Bootstrap Icons using Unicode */
+        .bi-mortarboard::before { content: "🎓"; }
+        .bi-box-arrow-in-right::before { content: "🔑"; }
+        .bi-person-plus::before { content: "✨"; }
+        .bi-speedometer2::before { content: "⚡"; }
+        .bi-graph-up::before { content: "📊"; }
+        .bi-shield-check::before { content: "🛡️"; }
+        .bi-check2-circle::before { content: "✅"; }
+        .bi-house::before { content: "🏠"; }
+        .bi-envelope::before { content: "✉️"; }
+        .bi-phone::before { content: "📞"; }
+        .bi-geo-alt::before { content: "📍"; }
+        
+        /* Remove icon font dependencies */
+        .bi::before {
+            font-family: inherit;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+        }
+        
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #06b6d4;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: var(--light-color);
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: white;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-custom, .btn-secondary-custom {
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary-custom {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary-custom {
+            background: transparent;
+            color: white;
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .btn-primary-custom:hover, .btn-secondary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem; }
+            .hero-subtitle { font-size: 1.2rem; }
+            .hero-description { font-size: 1rem; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-8">
+                    <div class="hero-content text-center">
+                        <h1 class="hero-title">
+                            Smart Attendance
+                            <span style="display: block; background: linear-gradient(45deg, #fff, #f0f9ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                Management
+                            </span>
+                        </h1>
+                        
+                        <p class="hero-subtitle">
+                            For KNIT Students Only<br>
+                            Revolutionize your college attendance tracking with our intelligent system
+                        </p>
+                        
+                        <p class="hero-description">
+                            <br>Now Track your Attendance in a new way to maintain the 75% criteria<br> 
+                            Streamline attendance management for students, faculty, and administrators with real-time tracking, 
+                            automated reports, and intuitive dashboards. Experience the future of educational administration.
+                        </p>
+                        
+                        <div class="hero-buttons">
+                            <a href="login.html" class="btn-primary-custom hero-login-btn">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                            </a>
+                            <a href="app.html" class="btn-secondary-custom hero-signup-btn">
+                                <i class="bi bi-person-plus me-2"></i>Create Account
+                            </a>
+                        </div>
+                        
+                        <div style="margin-top: 2rem; opacity: 0.7;">
+                            <p>System Online • <span id="current-time"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString();
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        console.log('SmartAttend Homepage loaded successfully!');
+    </script>
+</body>
+</html>
