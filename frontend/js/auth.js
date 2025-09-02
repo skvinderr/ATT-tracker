@@ -163,11 +163,16 @@ class AuthManager {
 
     // Load branches for registration
     async loadBranches() {
+        console.log('Loading branches...');
         try {
             const response = await fetch('/api/branches');
+            console.log('Branch API response status:', response.status);
+            
             if (response.ok) {
                 const result = await response.json();
+                console.log('Branch API result:', result);
                 this.branches = result.data || [];
+                console.log('Loaded branches:', this.branches);
             } else {
                 // Fallback to hardcoded branches if API fails
                 console.warn('Failed to load branches from API, using fallback');
@@ -176,7 +181,10 @@ class AuthManager {
                     { _id: 'ece', name: 'Electronics and Communication Engineering', code: 'ECE' },
                     { _id: 'me', name: 'Mechanical Engineering', code: 'ME' },
                     { _id: 'ce', name: 'Civil Engineering', code: 'CE' },
-                    { _id: 'it', name: 'Information Technology', code: 'IT' }
+                    { _id: 'it', name: 'Information Technology', code: 'IT' },
+                    { _id: 'eee', name: 'Electrical and Electronics Engineering', code: 'EEE' },
+                    { _id: 'chem', name: 'Chemical Engineering', code: 'CHEM' },
+                    { _id: 'bio', name: 'Biotechnology', code: 'BIO' }
                 ];
             }
         } catch (error) {
@@ -187,12 +195,17 @@ class AuthManager {
                 { _id: 'ece', name: 'Electronics and Communication Engineering', code: 'ECE' },
                 { _id: 'me', name: 'Mechanical Engineering', code: 'ME' },
                 { _id: 'ce', name: 'Civil Engineering', code: 'CE' },
-                { _id: 'it', name: 'Information Technology', code: 'IT' }
+                { _id: 'it', name: 'Information Technology', code: 'IT' },
+                { _id: 'eee', name: 'Electrical and Electronics Engineering', code: 'EEE' },
+                { _id: 'chem', name: 'Chemical Engineering', code: 'CHEM' },
+                { _id: 'bio', name: 'Biotechnology', code: 'BIO' }
             ];
         }
 
         // Populate branch select
         const branchSelect = document.getElementById('registerBranch');
+        console.log('Branch select element:', branchSelect);
+        
         if (branchSelect) {
             branchSelect.innerHTML = '<option value="">Select Branch</option>';
             this.branches.forEach(branch => {
@@ -202,6 +215,9 @@ class AuthManager {
                 option.textContent = `${branch.name} (${branch.code})`;
                 branchSelect.appendChild(option);
             });
+            console.log('Branch dropdown populated with', this.branches.length, 'options');
+        } else {
+            console.error('Branch select element not found');
         }
 
         return this.branches;
@@ -358,6 +374,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Register form handler
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
+        // Load branches initially for the registration form
+        authManager.loadBranches();
+        
         // Role change handler
         const roleSelect = document.getElementById('registerRole');
         const studentFields = document.getElementById('studentFields');
@@ -365,11 +384,19 @@ document.addEventListener('DOMContentLoaded', function() {
         roleSelect.addEventListener('change', function() {
             if (this.value === 'student') {
                 studentFields.style.display = 'block';
-                authManager.loadBranches();
+                // Ensure branches are loaded when student role is selected
+                if (authManager.branches.length === 0) {
+                    authManager.loadBranches();
+                }
             } else {
                 studentFields.style.display = 'none';
             }
         });
+
+        // Initial check if student role is already selected
+        if (roleSelect.value === 'student') {
+            studentFields.style.display = 'block';
+        }
 
         registerForm.addEventListener('submit', async function(e) {
             e.preventDefault();
