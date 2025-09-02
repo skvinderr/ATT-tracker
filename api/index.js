@@ -3,15 +3,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-require('dotenv').config();
 
-// Validate required environment variables
-const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-
-if (missingEnvVars.length > 0) {
-  console.error('Missing required environment variables:', missingEnvVars.join(', '));
-  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+// For serverless functions, we need to handle environment variables differently
+if (!process.env.VERCEL) {
+  require('dotenv').config();
 }
 
 // Import database connection
@@ -27,17 +22,22 @@ const dashboardRoutes = require('../backend/routes/dashboard');
 // Initialize Express app
 const app = express();
 
-// Connect to database with error handling
-let dbConnected = false;
-connectDB()
-  .then(() => {
-    dbConnected = true;
-    console.log('Database connected successfully');
-  })
-  .catch(err => {
-    console.error('Failed to connect to database:', err);
-    dbConnected = false;
-  });
+// Global variable to track database connection
+global.dbConnected = false;
+
+// Initialize database connection
+async function initializeDatabase() {
+  if (!global.dbConnected) {
+    try {
+      await connectDB();
+      global.dbConnected = true;
+      console.log('Database connected successfully');
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      global.dbConnected = false;
+    }
+  }
+}
 
 // Security middleware
 app.use(helmet({
@@ -67,6 +67,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Initialize database for each request (serverless-friendly)
+app.use(async (req, res, next) => {
+  await initializeDatabase();
+  next();
+});
+
 // Serve static files from frontend directory
 app.use(express.static(path.join(__dirname, '../frontend')));
 
@@ -82,13 +88,14 @@ app.get('/api/health', (req, res) => {
   const envCheck = {
     MONGODB_URI: !!process.env.MONGODB_URI,
     JWT_SECRET: !!process.env.JWT_SECRET,
-    NODE_ENV: process.env.NODE_ENV || 'not set'
+    NODE_ENV: process.env.NODE_ENV || 'not set',
+    VERCEL: !!process.env.VERCEL
   };
   
-  res.status(dbConnected ? 200 : 503).json({ 
-    status: dbConnected ? 'OK' : 'Error', 
-    message: dbConnected ? 'Server is running' : 'Database connection failed',
-    database: dbConnected ? 'Connected' : 'Disconnected',
+  res.status(global.dbConnected ? 200 : 503).json({ 
+    status: global.dbConnected ? 'OK' : 'Error', 
+    message: global.dbConnected ? 'Server is running' : 'Database connection failed',
+    database: global.dbConnected ? 'Connected' : 'Disconnected',
     environment: envCheck,
     timestamp: new Date().toISOString()
   });
@@ -106,7 +113,7 @@ app.get('/api/debug', (req, res) => {
       platform: process.platform,
       nodeVersion: process.version
     },
-    database: dbConnected,
+    database: global.dbConnected,
     timestamp: new Date().toISOString()
   });
 });

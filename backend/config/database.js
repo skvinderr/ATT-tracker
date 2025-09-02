@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 
+let isConnected = false;
+
 const connectDB = async () => {
+  // If already connected, return
+  if (isConnected) {
+    console.log('Using existing database connection');
+    return;
+  }
+
   try {
     // Log the connection attempt
     console.log('Attempting to connect to MongoDB...');
@@ -12,20 +20,24 @@ const connectDB = async () => {
 
     const conn = await mongoose.connect(process.env.MONGODB_URI);
 
+    isConnected = true;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Database: ${conn.connection.name}`);
     
     // Connection event listeners
     mongoose.connection.on('connected', () => {
       console.log('Mongoose connected to MongoDB');
+      isConnected = true;
     });
 
     mongoose.connection.on('error', (err) => {
       console.error('Mongoose connection error:', err);
+      isConnected = false;
     });
 
     mongoose.connection.on('disconnected', () => {
       console.log('Mongoose disconnected');
+      isConnected = false;
     });
 
     // Handle application termination
@@ -42,8 +54,10 @@ const connectDB = async () => {
 
   } catch (error) {
     console.error('Database connection error:', error);
-    // Don't exit in serverless environments, just throw the error
-    if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+    isConnected = false;
+    
+    // In serverless environments, don't exit the process
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
       throw error;
     } else {
       process.exit(1);
