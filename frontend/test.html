@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page - SmartAttend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            padding: 50px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 SmartAttend Test Page</h1>
+        <p>If you can see this page, the server is working correctly!</p>
+        
+        <div class="status">
+            <h3>✅ Server Status: Online</h3>
+            <p>Homepage routing is working properly</p>
+        </div>
+        
+        <div>
+            <a href="/login" class="btn">🔑 Go to Login</a>
+            <a href="/home" class="btn">🏠 Original Homepage</a>
+        </div>
+        
+        <div style="margin-top: 40px;">
+            <h3>Navigation Test:</h3>
+            <p>✅ Main URL: <code>http://localhost:4000</code> (This page)</p>
+            <p>🔑 Login URL: <code>http://localhost:4000/login</code></p>
+            <p>🏠 Home URL: <code>http://localhost:4000/home</code></p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded successfully at:', window.location.href);
+            console.log('Server is responding correctly!');
+        });
+    </script>
+</body>
+</html>
