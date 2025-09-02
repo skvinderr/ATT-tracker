@@ -218,9 +218,15 @@ process.on('unhandledRejection', (err, promise) => {
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.log(`Error: ${err.message}`);
-  console.log('Shutting down the server due to uncaught exception');
-  process.exit(1);
+  console.error(`Uncaught Exception: ${err.message}`);
+  console.error('Stack trace:', err.stack);
+  // Don't exit the process in development
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Shutting down the server due to uncaught exception');
+    process.exit(1);
+  } else {
+    console.log('Continuing in development mode...');
+  }
 });
 
 // Graceful shutdown
