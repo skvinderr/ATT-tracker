@@ -18,8 +18,11 @@ const dashboardRoutes = require('../backend/routes/dashboard');
 // Initialize Express app
 const app = express();
 
-// Connect to database
-connectDB();
+// Connect to database with error handling
+connectDB().catch(err => {
+  console.error('Failed to connect to database:', err);
+  process.exit(1);
+});
 
 // Security middleware
 app.use(helmet({
