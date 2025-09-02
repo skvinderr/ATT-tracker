@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Attendance Tracker</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" id="mainNav">
+        <div class="container">
+            <a class="navbar-brand" href="#" onclick="showPage('dashboard')" data-page="dashboard">
+                <i class="bi bi-calendar-check me-2"></i>
+                Smart Attend
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto" id="navItems">
+                    <!-- Navigation items will be populated by JavaScript -->
+                </ul>
+                
+                <div class="navbar-nav" id="userNav">
+                    <div class="nav-item dropdown" id="userDropdown" style="display: none;">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span id="userNameNav">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="showPage('profile')">
+                                <i class="bi bi-person me-2"></i>Profile
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                    
+                    <div id="authButtons">
+                        <button class="btn btn-outline-light me-2" onclick="showPage('login')" data-page="login">Login</button>
+                        <button class="btn btn-light" onclick="showPage('register')" data-page="register">Sign Up</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Login Page -->
+        <div id="loginPage" class="page">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card shadow">
+                            <div class="card-body p-5">
+                                <div class="text-center mb-4">
+                                    <i class="bi bi-calendar-check text-primary" style="font-size: 3rem;"></i>
+                                    <h3 class="mt-3">Login</h3>
+                                    <p class="text-muted">Access your attendance dashboard</p>
+                                </div>
+                                
+                                <form id="loginForm">
+                                    <div class="mb-3">
+                                        <label for="loginEmail" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="loginEmail" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="loginPassword" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="loginPassword" required>
+                                    </div>
+                                    
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="rememberMe">
+                                        <label class="form-check-label" for="rememberMe">Remember me</label>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                                        <span class="btn-text">Login</span>
+                                        <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <a href="#" class="text-decoration-none" onclick="showPage('forgotPassword')">Forgot Password?</a>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="text-center">
+                                    <p class="mb-0">Don't have an account? 
+                                        <a href="#" class="text-decoration-none" onclick="showPage('register')">Sign up</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="registerPage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="card shadow">
+                            <div class="card-body p-5">
+                                <div class="text-center mb-4">
+                                    <i class="bi bi-person-plus text-primary" style="font-size: 3rem;"></i>
+                                    <h3 class="mt-3">Create Account</h3>
+                                    <p class="text-muted">Join the attendance tracking system</p>
+                                </div>
+                                
+                                <form id="registerForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="registerName" class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" id="registerName" required>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="registerEmail" class="form-label">Email Address</label>
+                                            <input type="email" class="form-control" id="registerEmail" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="registerPhone" class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="registerPhone" pattern="[0-9]{10}" required>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="registerRole" class="form-label">Role</label>
+                                            <select class="form-select" id="registerRole" required>
+                                                <option value="">Select Role</option>
+                                                <option value="student">Student</option>
+                                                <option value="admin">Administrator</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="studentFields" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="registerBranch" class="form-label">Branch</label>
+                                                <select class="form-select" id="registerBranch">
+                                                    <option value="">Select Branch</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="registerSemester" class="form-label">Semester</label>
+                                                <select class="form-select" id="registerSemester">
+                                                    <option value="">Select Semester</option>
+                                                    <option value="1">1st Semester</option>
+                                                    <option value="2">2nd Semester</option>
+                                                    <option value="3">3rd Semester</option>
+                                                    <option value="4">4th Semester</option>
+                                                    <option value="5">5th Semester</option>
+                                                    <option value="6">6th Semester</option>
+                                                    <option value="7">7th Semester</option>
+                                                    <option value="8">8th Semester</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="registerPassword" class="form-label">Password</label>
+                                            <input type="password" class="form-control" id="registerPassword" required>
+                                            <div class="form-text">Must be at least 6 characters long</div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                            <input type="password" class="form-control" id="confirmPassword" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                                        <span class="btn-text">Create Account</span>
+                                        <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <p class="mb-0">Already have an account? 
+                                        <a href="#" class="text-decoration-none" onclick="showPage('login')">Login</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forgot Password Page -->
+        <div id="forgotPasswordPage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card shadow">
+                            <div class="card-body p-5">
+                                <div class="text-center mb-4">
+                                    <i class="bi bi-key text-primary" style="font-size: 3rem;"></i>
+                                    <h3 class="mt-3">Reset Password</h3>
+                                    <p class="text-muted">Enter your email to receive reset link</p>
+                                </div>
+                                
+                                <form id="forgotPasswordForm">
+                                    <div class="mb-3">
+                                        <label for="forgotEmail" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="forgotEmail" required>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                                        <span class="btn-text">Send Reset Link</span>
+                                        <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <a href="#" class="text-decoration-none" onclick="showPage('login')">
+                                        <i class="bi bi-arrow-left me-1"></i>Back to Login
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page" style="display: none;">
+            <div class="container-fluid">
+                <!-- Welcome Section -->
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h1 class="h3 mb-0">Dashboard</h1>
+                                <p class="text-muted mb-0">Welcome back, <span id="userNameDashboard">Student</span></p>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary" id="currentDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-primary shadow h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Overall Attendance
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="overallAttendance">0%</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-success shadow h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Classes Attended
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="classesAttended">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-warning shadow h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Total Classes
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalClasses">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-calendar3 text-warning" style="font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-info shadow h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Subjects
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalSubjects">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-book text-info" style="font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject-wise Attendance -->
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Subject-wise Attendance</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="subjectAttendanceList">
+                                    <!-- Subject attendance will be populated here -->
+                                    <div class="text-center text-muted py-5">
+                                        <i class="bi bi-hourglass-split mb-2" style="font-size: 3rem;"></i>
+                                        <p>Loading attendance data...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Today's Classes</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="todayClasses">
+                                    <!-- Today's classes will be populated here -->
+                                    <div class="text-center text-muted py-3">
+                                        <i class="bi bi-calendar-day mb-2" style="font-size: 2rem;"></i>
+                                        <p>No classes today</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Chart -->
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Attendance Trends</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="attendanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Upcoming Classes</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="upcomingClasses">
+                                    <!-- Upcoming classes will be populated here -->
+                                    <div class="text-center text-muted py-3">
+                                        <i class="bi bi-clock mb-2" style="font-size: 2rem;"></i>
+                                        <p>No upcoming classes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mark Attendance Page -->
+        <div id="markAttendancePage" class="page" style="display: none;">
+            <div class="container-fluid">
+                <div class="row mb-4">
+                    <div class="col">
+                        <h1 class="h3 mb-0">Mark Attendance</h1>
+                        <p class="text-muted">Mark your attendance for today's classes</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Today's Classes</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="markAttendanceList">
+                                    <!-- Classes for attendance marking will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Quick Stats</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <h4 id="todayAttendancePercentage">0%</h4>
+                                    <p class="text-muted">Today's Attendance</p>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Present:</span>
+                                        <span id="todayPresent" class="text-success">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Classes:</span>
+                                        <span id="todayTotal">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Profile Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="profileForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="profileName" class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" id="profileName" required>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="profileEmail" class="form-label">Email Address</label>
+                                            <input type="email" class="form-control" id="profileEmail" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="profilePhone" class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="profilePhone">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="profileStudentId" class="form-label">Student ID</label>
+                                            <input type="text" class="form-control" id="profileStudentId" readonly>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <span class="btn-text">Update Profile</span>
+                                        <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </form>
+                                
+                                <hr>
+                                
+                                <h6 class="text-primary">Change Password</h6>
+                                <form id="passwordForm">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="currentPassword" class="form-label">Current Password</label>
+                                            <input type="password" class="form-control" id="currentPassword" required>
+                                        </div>
+                                        
+                                        <div class="col-md-4 mb-3">
+                                            <label for="newPassword" class="form-label">New Password</label>
+                                            <input type="password" class="form-control" id="newPassword" required>
+                                        </div>
+                                        
+                                        <div class="col-md-4 mb-3">
+                                            <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                                            <input type="password" class="form-control" id="confirmNewPassword" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-warning">
+                                        <span class="btn-text">Change Password</span>
+                                        <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Page -->
+        <div id="reportsPage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Attendance Reports</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-primary" onclick="dashboardUtils.exportAttendanceData('pdf')">
+                                        <i class="bi bi-download me-1"></i>Export PDF
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="reportDateFrom" class="form-label">From Date</label>
+                                        <input type="date" class="form-control" id="reportDateFrom">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="reportDateTo" class="form-label">To Date</label>
+                                        <input type="date" class="form-control" id="reportDateTo">
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Subject</th>
+                                                        <th>Total Classes</th>
+                                                        <th>Attended</th>
+                                                        <th>Attendance %</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="reportsTableBody">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-muted">
+                                                            <p>Loading attendance reports...</p>
+                                                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timetable Page (Student View) -->
+        <div id="timetablePage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">My Timetable</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>Time</th>
+                                                <th>Monday</th>
+                                                <th>Tuesday</th>
+                                                <th>Wednesday</th>
+                                                <th>Thursday</th>
+                                                <th>Friday</th>
+                                                <th>Saturday</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="timetableTableBody">
+                                            <!-- Dynamic timetable data will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    This is a sample timetable. Full implementation requires backend integration.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Management Page (Admin View) -->
+        <div id="studentsPage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Manage Students</h6>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Student
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="studentSearchInput" placeholder="Search students...">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="studentFilterBranch">
+                                            <option value="">All Branches</option>
+                                            <option value="CSE">Computer Science</option>
+                                            <option value="ECE">Electronics</option>
+                                            <option value="MECH">Mechanical</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="studentFilterSemester">
+                                            <option value="">All Semesters</option>
+                                            <option value="1">Semester 1</option>
+                                            <option value="2">Semester 2</option>
+                                            <option value="3">Semester 3</option>
+                                            <option value="4">Semester 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Student ID</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Branch</th>
+                                                <th>Semester</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="studentsTableBody">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">
+                                                    <p>Loading students...</p>
+                                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects Management Page (Admin View) -->
+        <div id="subjectsPage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Manage Subjects</h6>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Subject
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" id="subjectSearchInput" placeholder="Search subjects...">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="subjectFilterBranch">
+                                            <option value="">All Branches</option>
+                                            <option value="CSE">Computer Science</option>
+                                            <option value="ECE">Electronics</option>
+                                            <option value="MECH">Mechanical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Subject Code</th>
+                                                <th>Subject Name</th>
+                                                <th>Branch</th>
+                                                <th>Semester</th>
+                                                <th>Credits</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="subjectsTableBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">
+                                                    <p>Loading subjects...</p>
+                                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timetables Management Page (Admin View) -->
+        <div id="timetablesPage" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Manage Timetables</h6>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTimetableModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Schedule
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="timetableFilterBranch">
+                                            <option value="">All Branches</option>
+                                            <!-- Options will be populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="timetableFilterSemester">
+                                            <option value="">All Semesters</option>
+                                            <option value="1">Semester 1</option>
+                                            <option value="2">Semester 2</option>
+                                            <option value="3">Semester 3</option>
+                                            <option value="4">Semester 4</option>
+                                            <option value="5">Semester 5</option>
+                                            <option value="6">Semester 6</option>
+                                            <option value="7">Semester 7</option>
+                                            <option value="8">Semester 8</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-secondary" onclick="filterTimetables()">
+                                            <i class="bi bi-funnel me-1"></i>Filter
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Branch</th>
+                                                <th>Semester</th>
+                                                <th>Subject</th>
+                                                <th>Day</th>
+                                                <th>Time</th>
+                                                <th>Room</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="timetablesTableBody">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">
+                                                    <p>Loading timetables...</p>
+                                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer">
+        <!-- Toasts will be dynamically added here -->
+    </div>
+
+    <!-- Add Timetable Modal -->
+    <div class="modal fade" id="addTimetableModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Timetable Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTimetableForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="timetableBranch" class="form-label">Branch</label>
+                                <select class="form-select" id="timetableBranch" required>
+                                    <option value="">Select Branch</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="timetableSemester" class="form-label">Semester</label>
+                                <select class="form-select" id="timetableSemester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="4">Semester 4</option>
+                                    <option value="5">Semester 5</option>
+                                    <option value="6">Semester 6</option>
+                                    <option value="7">Semester 7</option>
+                                    <option value="8">Semester 8</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="timetableSubject" class="form-label">Subject</label>
+                            <select class="form-select" id="timetableSubject" required>
+                                <option value="">Select Subject</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="timetableDay" class="form-label">Day</label>
+                                <select class="form-select" id="timetableDay" required>
+                                    <option value="">Select Day</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="timetableTime" class="form-label">Time</label>
+                                <input type="text" class="form-control" id="timetableTime" placeholder="e.g., 09:00-10:00" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="timetableRoom" class="form-label">Room</label>
+                            <input type="text" class="form-control" id="timetableRoom" placeholder="e.g., CS-101" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addTimetableEntry()">Add Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Timetable Modal -->
+    <div class="modal fade" id="editTimetableModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Timetable Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTimetableForm">
+                        <input type="hidden" id="editTimetableId">
+                        <input type="hidden" id="editTimetableIndex">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableBranch" class="form-label">Branch</label>
+                                <select class="form-select" id="editTimetableBranch" required>
+                                    <option value="">Select Branch</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableSemester" class="form-label">Semester</label>
+                                <select class="form-select" id="editTimetableSemester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="4">Semester 4</option>
+                                    <option value="5">Semester 5</option>
+                                    <option value="6">Semester 6</option>
+                                    <option value="7">Semester 7</option>
+                                    <option value="8">Semester 8</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTimetableSubject" class="form-label">Subject</label>
+                            <select class="form-select" id="editTimetableSubject" required>
+                                <option value="">Select Subject</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableDay" class="form-label">Day</label>
+                                <select class="form-select" id="editTimetableDay" required>
+                                    <option value="">Select Day</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTimetableTime" class="form-label">Time</label>
+                                <input type="text" class="form-control" id="editTimetableTime" placeholder="e.g., 09:00-10:00" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTimetableRoom" class="form-label">Room</label>
+                            <input type="text" class="form-control" id="editTimetableRoom" placeholder="e.g., CS-101" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateTimetableEntry()">Update Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStudentForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="studentId" class="form-label">Student ID</label>
+                                <input type="text" class="form-control" id="studentId" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="studentName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="studentName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="studentEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="studentEmail" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="studentBranch" class="form-label">Branch</label>
+                                <select class="form-select" id="studentBranch" required>
+                                    <option value="">Select Branch</option>
+                                    <option value="CSE">Computer Science</option>
+                                    <option value="ECE">Electronics</option>
+                                    <option value="MECH">Mechanical</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="studentSemester" class="form-label">Semester</label>
+                                <select class="form-select" id="studentSemester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="4">Semester 4</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="studentPhone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="studentPhone">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addStudent()">Add Student</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Subject Modal -->
+    <div class="modal fade" id="addSubjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Subject</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSubjectForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="subjectCode" class="form-label">Subject Code</label>
+                                <input type="text" class="form-control" id="subjectCode" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="subjectCredits" class="form-label">Credits</label>
+                                <input type="number" class="form-control" id="subjectCredits" min="1" max="6" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="subjectName" class="form-label">Subject Name</label>
+                            <input type="text" class="form-control" id="subjectName" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="subjectBranch" class="form-label">Branch</label>
+                                <select class="form-select" id="subjectBranch" required>
+                                    <option value="">Select Branch</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="subjectSemester" class="form-label">Semester</label>
+                                <select class="form-select" id="subjectSemester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="4">Semester 4</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="subjectDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="subjectDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addSubject()">Add Subject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Please wait...</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/attendance.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
