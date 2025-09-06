@@ -392,6 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 studentFields.style.display = 'none';
             }
         });
+        
 
         // Initial check if student role is already selected
         if (roleSelect.value === 'student') {

@@ -120,6 +120,7 @@ const attendanceManager = {
                 console.log('Failed to fetch timetable for attendance');
             }
             
+            
             // Show special message if no classes
             if (todayClasses.length === 0) {
                 this.renderNoClassesMessage();
@@ -166,7 +167,7 @@ const attendanceManager = {
                     <i class="bi bi-lightbulb me-2"></i>
                     <strong>Pro tip:</strong> ${isWeekend 
                         ? 'Use this time to catch up on studies or pursue hobbies!' 
-                        : 'Perfect day for extra study sessions or project work!'
+                        :    'Perfect day for extra study sessions or project work!'
                     }
                 </div>
             </div>

@@ -1,0 +1,56 @@
+Attached HTML and CSS Context
+
+<body style="background: #4CAF50; color: white; font-family: Arial; text-align: center; padding: 50px;">
+        <h1>✅ SERVER IS WORKING!</h1>
+        <p>This is a test page to verify the server is functioning.</p>
+        <p>Time: 3/9/2025, 12:25:13 am</p>
+        <hr>
+        <a href="/" style="color: yellow; text-decoration: none; font-size: 18px;">🏠 Go to Homepage</a>
+      
+    
+  </body>
+
+
+/* Inline style */
+element {
+  background: #4CAF50;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+  padding: 50px;
+  background-image: initial;
+  background-position-x: initial;
+  background-position-y: initial;
+  background-size: initial;
+  background-repeat: initial;
+  background-attachment: initial;
+  background-origin: initial;
+  background-clip: initial;
+  background-color: rgb(76, 175, 80);
+  color: white;
+  font-family: Arial;
+  text-align: center;
+  padding-top: 50px;
+  padding-right: 50px;
+  padding-bottom: 50px;
+  padding-left: 50px;
+}
+
+/* Matched Rule from user-agent */
+body {
+  display: block;
+  margin-top: 8px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  margin-left: 8px;
+}
+
+/* Inherited from ancestor level 1 (user-agent) */
+html {
+  display: block;
+}
+
+/* Inherited from ancestor level 1 (user-agent) */
+:root {
+  view-transition-name: root;
+}
